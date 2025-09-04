@@ -1,0 +1,118 @@
+# ===========================================
+# Tournament Method Project - .gitignore
+# ===========================================
+
+# Database files - SECURITY CRITICAL - NEVER commit these
+data/*.db
+data/*.sqlite*
+data/*.db-*
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration files with sensitive data
+config/secrets.php
+config/oauth.php
+config/production.php
+config/local.php
+.env*
+!.env.example
+
+# Logs and debugging
+logs/
+*.log
+debug.log
+error.log
+access.log
+php_errors.log
+
+# Session files
+sessions/
+tmp/sessions/
+
+# Cache and temporary files
+cache/
+tmp/
+temp/
+uploads/temp/
+.cache/
+
+# Backup and archive files
+*.backup
+*.bak
+*.old
+*.orig
+*.tmp
+data/backup/
+*.sql.gz
+
+# Composer dependencies
+vendor/
+composer.lock
+composer.phar
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+*~
+.project
+.buildpath
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Runtime files
+*.pid
+*.sock
+
+# Testing
+/phpunit.xml
+.phpunit.result.cache
+tests/coverage/
+coverage/
+
+# Build and distribution
+/build/
+/dist/
+public/assets/compiled/
+
+# Package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tournament-specific files to ignore
+data/tournament_method.db*
+data/imports/
+data/exports/temp/
+parsed_data/
+scraped_data/
+
+# Development tools
+.php_cs.cache
+.phpcs-cache
+.php-version
+
+# Documentation build artifacts
+docs/_build/
+docs/.doctrees/
+
+# Local development overrides
+local_config.php
+development.ini
+
+# bmad-core
+.bmad-core
+.claude
+.gemini
