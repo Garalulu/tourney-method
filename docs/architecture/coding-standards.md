@@ -1,7 +1,7 @@
 # Tourney Method Coding Standards
 
 ## Overview
-These coding standards ensure consistency, maintainability, and security for the Tourney Method project - a vanilla PHP + jQuery + SQLite application focused on osu! tournament discovery.
+These coding standards ensure consistency, maintainability, and security for the Tourney Method project - a greenfield vanilla PHP + jQuery + SQLite application focused on osu! tournament discovery.
 
 ## PHP Standards
 
@@ -214,7 +214,7 @@ class TournamentRepository {
 
 ## File Organization Standards
 
-### Directory Structure (Current State)
+### Directory Structure (Greenfield Design)
 ```
 src/
 ├── config/          # Configuration files
@@ -264,9 +264,9 @@ public function parseForumPost(array $postData): array {
 
 ### README Requirements
 - **Setup Instructions**: One-command local development setup
-- **Deployment Steps**: DigitalOcean deployment checklist
+- **Deployment Steps**: DigitalOcean App Platform deployment guide
 - **Environment Variables**: Required OAuth and API configuration
-- **Known Issues**: Current technical debt and workarounds
+- **Getting Started**: Greenfield development workflow guide
 
 ## Testing Standards
 
@@ -368,17 +368,17 @@ test(parser): add unit tests for rank range extraction
 - [ ] HTTPS certificate valid
 - [ ] Korean timezone (Asia/Seoul) configured
 
-## Legacy Constraints
+## Architectural Decisions
 
-### Technology Limitations (Must Maintain)
-- **No PHP Frameworks**: Vanilla PHP only
-- **No Modern JS Frameworks**: jQuery only
-- **No Build Tools**: Direct file deployment
-- **SQLite Only**: No database server dependencies
-- **Monolithic Architecture**: Single application deployment
+### Greenfield Technology Choices (Intentional Design)
+- **Vanilla PHP**: Chosen for deployment simplicity and direct App Platform compatibility
+- **jQuery**: Selected for progressive enhancement and reliable browser support
+- **Direct Deployment**: Enables streamlined CI/CD with zero build complexity
+- **SQLite**: Optimal for App Platform persistent storage and Korean market cost efficiency
+- **Monolithic Start**: Appropriate for MVP scope with clear microservices evolution path
 
-These constraints are **non-negotiable** for the current project phase but evolution paths are planned for future phases.
+These are **deliberate architectural decisions** for our greenfield MVP, designed for rapid deployment and future scalability.
 
 ---
 
-**Note**: These standards reflect the current brownfield state while planning for evolution. Security requirements are absolutely mandatory from day one.
+**Note**: These standards reflect our greenfield architectural decisions, optimized for DigitalOcean App Platform deployment and Korean market requirements. Security requirements are absolutely mandatory from day one.
