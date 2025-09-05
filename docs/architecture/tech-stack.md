@@ -324,7 +324,7 @@ App Platform Services:
 # Required software
 PHP 8.1+                    # Core runtime
 SQLite 3.35+               # Database engine
-Apache/Nginx               # Local web server
+Nginx                      # Local web server (matching App Platform)
 Composer                   # Dependency management
 Git                        # Version control
 doctl CLI                  # DigitalOcean CLI for deployment

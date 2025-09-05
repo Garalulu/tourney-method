@@ -54,7 +54,7 @@ public/                           # Web root - all publicly accessible files
 │   └── images/
 │       └── placeholder.png       # Tournament banner fallback
 ├── health.php                    # App Platform health check endpoint
-└── .htaccess                     # URL rewriting and security (if needed)
+└── .htaccess                     # Local development only (not used on App Platform)
 ```
 
 ### PHP Application Code (To Be Implemented)
@@ -173,7 +173,7 @@ docs/                             # Documentation
 
 data/
 ├── schema.sql                    # Database schema ✅ (exists)
-└── .htaccess                     # Security protection
+└── .htaccess                     # Local development only (App Platform handles security)
 
 config/
 └── database.php                  # Basic database config ✅ (exists)
@@ -329,7 +329,7 @@ public/           # Served - web accessible only
 Application Security (To Implement):
 ├── src/utils/SecurityHelper.php  # CSRF, XSS protection
 ├── src/utils/ValidationHelper.php # Input validation
-└── public/.htaccess              # Additional headers
+└── .do/app.yaml                 # App Platform configuration
 ```
 
 ## Testing Strategy (To Be Implemented)

@@ -1,0 +1,52 @@
+name: tourney-method
+region: sgp1  # Singapore for Korean optimization
+
+services:
+  - name: web
+    source_dir: /
+    github:
+      repo: your-username/tourney-method
+      branch: main
+      deploy_on_push: true
+    
+    run_command: php -S 0.0.0.0:$PORT -t public/
+    environment_slug: php
+    instance_count: 1
+    instance_size_slug: basic-xxs  # $5/month tier
+    
+    routes:
+      - path: /
+    
+    health_check:
+      http_path: /health.php
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    
+    envs:
+      - key: OSU_CLIENT_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: OSU_CLIENT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: TZ
+        scope: RUN_TIME
+        value: "Asia/Seoul"
+      - key: APP_URL
+        scope: RUN_TIME
+        value: "https://tourney-method-xxxxx.ondigitalocean.app"
+      - key: SESSION_SECRET
+        scope: RUN_TIME
+        type: SECRET
+
+# Scheduled Jobs for Tournament Parser
+jobs:
+  - name: tournament-parser
+    source_dir: /
+    run_command: php scripts/parser/daily_parser.php
+    schedule: "0 2 * * *"  # Daily at 2 AM KST
+    instance_count: 1
+    instance_size_slug: basic-xxs

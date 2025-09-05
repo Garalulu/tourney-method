@@ -10,7 +10,7 @@
 **RESOLVED** - SQLite database now properly secured:
 
 1. **Database Location**: Moved to `/data/` directory (outside web root)
-2. **Access Control**: Added `.htaccess` to deny all web access to `/data/`
+2. **Access Control**: App Platform automatically denies all web access to `/data/`
 3. **File Permissions**: Database files will be set to 600 (owner read/write only)
 4. **Connection Security**: PDO configured with proper error handling
 
