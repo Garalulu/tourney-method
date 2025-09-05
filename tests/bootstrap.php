@@ -19,3 +19,17 @@ if (!is_dir($testDbDir)) {
 // Define test constants
 define('TEST_DB_PATH', $testDbDir . '/test.db');
 define('SCHEMA_PATH', __DIR__ . '/../data/database/schema.sql');
+define('PHPUNIT_RUNNING', true);
+
+// Configure session handling for tests
+ini_set('session.use_cookies', 0);
+ini_set('session.cache_limiter', '');
+ini_set('session.use_trans_sid', 0);
+ini_set('session.save_handler', 'files');
+session_save_path($testDbDir . '/sessions');
+
+// Create session directory
+$sessionDir = $testDbDir . '/sessions';
+if (!is_dir($sessionDir)) {
+    mkdir($sessionDir, 0755, true);
+}
