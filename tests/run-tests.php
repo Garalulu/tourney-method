@@ -190,13 +190,13 @@ class TestRunner
         
         echo "Test Suites:\n";
         foreach (self::TEST_SUITES as $key => $name) {
-            echo "  {$key:<12} {$name}\n";
+            echo "  " . str_pad($key, 12) . " {$name}\n";
         }
         echo "\n";
         
         echo "Test Groups:\n";
         foreach (self::GROUPS as $key => $name) {
-            echo "  {$key:<12} {$name}\n";
+            echo "  " . str_pad($key, 12) . " {$name}\n";
         }
         echo "\n";
         

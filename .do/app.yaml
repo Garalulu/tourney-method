@@ -41,12 +41,22 @@ services:
       - key: SESSION_SECRET
         scope: RUN_TIME
         type: SECRET
+      - key: DB_PATH
+        scope: RUN_TIME
+        value: "/tmp/tournaments.db"
 
 # Scheduled Jobs for Tournament Parser
 jobs:
   - name: tournament-parser
     source_dir: /
-    run_command: php scripts/parser/daily_parser.php
+    run_command: php scripts/parser/basic_parser.php
     schedule: "0 2 * * *"  # Daily at 2 AM KST
     instance_count: 1
     instance_size_slug: basic-xxs
+    envs:
+      - key: TZ
+        scope: RUN_TIME
+        value: "Asia/Seoul"
+      - key: DB_PATH
+        scope: RUN_TIME
+        value: "/tmp/tournaments.db"
