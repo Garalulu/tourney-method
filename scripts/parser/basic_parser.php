@@ -142,7 +142,7 @@ class BasicTournamentParser
     }
     
     /**
-     * Create tournament from forum topic
+     * Create tournament from forum topic with data extraction (Story 1.4)
      */
     private function createTournamentFromTopic(array $topic): void
     {
@@ -154,42 +154,57 @@ class BasicTournamentParser
                 'content' => $this->extractTopicContent($topic)
             ];
             
-            $tournamentId = $this->tournamentModel->createFromForumPost($forumPostData);
+            // Use the new extraction method from Story 1.4
+            $tournamentId = $this->tournamentModel->extractAndSaveFromRawData($forumPostData);
             
-            $this->logInfo("Created new tournament", [
+            $this->logInfo("Tournament created with data extraction", [
                 'tournament_id' => $tournamentId,
                 'topic_id' => $topic['id'],
-                'title' => $topic['title']
+                'title' => $topic['title'],
+                'extraction_method' => 'extractAndSaveFromRawData'
             ]);
             
         } catch (Exception $e) {
+            // Log detailed error for data extraction failures
+            $this->logError("Failed to extract and save tournament from topic", [
+                'topic_id' => $topic['id'] ?? 'unknown',
+                'title' => $topic['title'] ?? 'unknown',
+                'error' => $e->getMessage(),
+                'extraction_failed' => true
+            ]);
             throw new Exception("Failed to create tournament from topic {$topic['id']}: " . $e->getMessage());
         }
     }
     
     /**
-     * Extract content from topic data
+     * Extract content from topic data (Enhanced for Story 1.4)
      */
     private function extractTopicContent(array $topic): string
     {
-        // For basic parser, we'll store minimal content
-        // Full content parsing will be implemented in later stories
-        
         $content = [];
         
-        if (isset($topic['first_post']['body']['html'])) {
-            $content[] = "HTML Content: " . substr(strip_tags($topic['first_post']['body']['html']), 0, 1000);
+        // Prioritize raw content for better parsing
+        if (isset($topic['first_post']['body']['raw']) && !empty(trim($topic['first_post']['body']['raw']))) {
+            // Use full raw content for data extraction
+            return trim($topic['first_post']['body']['raw']);
         }
         
-        if (isset($topic['first_post']['body']['raw'])) {
-            $content[] = "Raw Content: " . substr($topic['first_post']['body']['raw'], 0, 1000);
+        // Fallback to HTML content with tag stripping
+        if (isset($topic['first_post']['body']['html']) && !empty(trim($topic['first_post']['body']['html']))) {
+            $htmlContent = $topic['first_post']['body']['html'];
+            // Convert HTML to more parseable format
+            $htmlContent = str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlContent);
+            $htmlContent = str_replace(['<p>', '</p>'], ["\n", "\n"], $htmlContent);
+            $htmlContent = strip_tags($htmlContent);
+            return trim($htmlContent);
         }
         
-        if (empty($content)) {
-            $content[] = "No content extracted - Topic ID: " . $topic['id'];
+        // Final fallback - use topic title as minimal content
+        if (isset($topic['title'])) {
+            return "Tournament Title: " . $topic['title'] . "\n\n[No additional content available]";
         }
         
-        return implode("\n\n", $content);
+        return "No content extracted - Topic ID: " . ($topic['id'] ?? 'unknown');
     }
     
     /**

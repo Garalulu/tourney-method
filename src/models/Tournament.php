@@ -3,6 +3,8 @@
 namespace TourneyMethod\Models;
 
 use TourneyMethod\Utils\SecurityHelper;
+use TourneyMethod\Services\ForumPostParserService;
+use TourneyMethod\Utils\UrlExtractor;
 use PDO;
 
 /**
@@ -14,6 +16,8 @@ use PDO;
 class Tournament
 {
     private PDO $db;
+    private ForumPostParserService $parserService;
+    private UrlExtractor $urlExtractor;
     
     public const STATUS_PENDING = 'pending_review';
     public const STATUS_APPROVED = 'approved';
@@ -23,6 +27,8 @@ class Tournament
     public function __construct(PDO $db)
     {
         $this->db = $db;
+        $this->parserService = new ForumPostParserService();
+        $this->urlExtractor = new UrlExtractor();
     }
     
     /**
@@ -43,6 +49,62 @@ class Tournament
         $tournament = $stmt->fetch(PDO::FETCH_ASSOC);
         
         return $tournament ?: null;
+    }
+    
+    /**
+     * Extract and save tournament data from raw forum post (Story 1.4)
+     * 
+     * Performs complete data extraction workflow using ForumPostParserService
+     * and UrlExtractor, then saves structured data to database.
+     * 
+     * @param array $forumPostData Forum post data from osu! API
+     * @return int Tournament ID
+     * @throws \Exception On validation, parsing, or database errors
+     */
+    public function extractAndSaveFromRawData(array $forumPostData): int
+    {
+        // Validate forum post structure
+        $this->validateForumPostData($forumPostData);
+        
+        $topicId = filter_var($forumPostData['id'], FILTER_VALIDATE_INT);
+        $rawTitle = $this->sanitizeTitle($forumPostData['title']);
+        $rawContent = $this->sanitizeRawContent($forumPostData['content'] ?? '');
+        
+        if (!$topicId || !$rawTitle) {
+            throw new \InvalidArgumentException('Invalid forum post data: missing or invalid topic ID or title');
+        }
+        
+        // Check for duplicate before processing
+        if ($this->findByTopicId($topicId)) {
+            throw new \Exception("Tournament with topic ID {$topicId} already exists");
+        }
+        
+        $this->db->beginTransaction();
+        
+        try {
+            // Parse forum post content to extract structured data
+            $parsedData = $this->parserService->parseForumPost($rawContent, $rawTitle);
+            
+            // Extract URL IDs from content
+            $urlIds = $this->urlExtractor->extractAllUrlIds($rawContent);
+            
+            // Validate and prepare extracted data for database
+            $tournamentData = $this->prepareExtractedData($parsedData, $urlIds, $topicId, $rawTitle, $rawContent);
+            
+            // Insert tournament with extracted data
+            $tournamentId = $this->insertExtractedTournament($tournamentData);
+            
+            // Log extraction results with confidence scores
+            $this->logTournamentExtraction($tournamentId, $topicId, $parsedData, $urlIds);
+            
+            $this->db->commit();
+            
+            return $tournamentId;
+            
+        } catch (\Exception $e) {
+            $this->db->rollback();
+            throw new \Exception('Failed to extract and save tournament data: ' . $e->getMessage());
+        }
     }
     
     /**
@@ -265,6 +327,126 @@ class Tournament
             "New tournament created from forum post: {$title}",
             $context,
             'Tournament::createFromForumPost'
+        ]);
+    }
+    
+    /**
+     * Prepare extracted data for database insertion
+     * 
+     * @param array $parsedData Parsed forum post data
+     * @param array $urlIds Extracted URL IDs
+     * @param int $topicId osu! topic ID
+     * @param string $rawTitle Raw forum title
+     * @param string $rawContent Raw forum content
+     * @return array Prepared tournament data
+     */
+    private function prepareExtractedData(array $parsedData, array $urlIds, int $topicId, string $rawTitle, string $rawContent): array
+    {
+        return [
+            'osu_topic_id' => $topicId,
+            'title' => $parsedData['title'] ?? $rawTitle,
+            'host_name' => $parsedData['host_name'],
+            'rank_range' => $parsedData['rank_range'],
+            'tournament_dates' => $parsedData['tournament_dates'],
+            'has_badge' => $parsedData['has_badge'] ? 1 : 0,
+            'banner_url' => $parsedData['banner_url'],
+            'google_sheet_id' => $urlIds['google_sheets'] ?? null,
+            'google_form_id' => $urlIds['google_forms'] ?? null,
+            'challonge_slug' => $urlIds['challonge'] ?? null,
+            'youtube_id' => $urlIds['youtube'] ?? null,
+            'twitch_username' => $urlIds['twitch'] ?? null,
+            'forum_url_slug' => $this->generateForumSlug($topicId),
+            'raw_post_content' => $rawContent,
+            'status' => self::STATUS_PENDING,
+            'extraction_confidence' => json_encode($parsedData['extraction_confidence'] ?? [])
+        ];
+    }
+    
+    /**
+     * Insert tournament with extracted data
+     * 
+     * @param array $tournamentData Prepared tournament data
+     * @return int Tournament ID
+     */
+    private function insertExtractedTournament(array $tournamentData): int
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO tournaments (
+                osu_topic_id, 
+                title, 
+                host_name,
+                rank_range,
+                tournament_dates,
+                has_badge,
+                banner_url,
+                google_sheet_id,
+                google_form_id,
+                challonge_slug,
+                youtube_id,
+                twitch_username,
+                forum_url_slug,
+                raw_post_content,
+                status,
+                extraction_confidence,
+                parsed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+        ");
+        
+        $stmt->execute([
+            $tournamentData['osu_topic_id'],
+            $tournamentData['title'],
+            $tournamentData['host_name'],
+            $tournamentData['rank_range'],
+            $tournamentData['tournament_dates'],
+            $tournamentData['has_badge'],
+            $tournamentData['banner_url'],
+            $tournamentData['google_sheet_id'],
+            $tournamentData['google_form_id'],
+            $tournamentData['challonge_slug'],
+            $tournamentData['youtube_id'],
+            $tournamentData['twitch_username'],
+            $tournamentData['forum_url_slug'],
+            $tournamentData['raw_post_content'],
+            $tournamentData['status'],
+            $tournamentData['extraction_confidence']
+        ]);
+        
+        return (int)$this->db->lastInsertId();
+    }
+    
+    /**
+     * Log tournament extraction results
+     * 
+     * @param int $tournamentId Tournament ID
+     * @param int $topicId osu! topic ID
+     * @param array $parsedData Parsed data with confidence scores
+     * @param array $urlIds Extracted URL IDs
+     */
+    private function logTournamentExtraction(int $tournamentId, int $topicId, array $parsedData, array $urlIds): void
+    {
+        $logStmt = $this->db->prepare("
+            INSERT INTO system_logs (level, message, context, source) 
+            VALUES (?, ?, ?, ?)
+        ");
+        
+        // Count successful extractions
+        $extractedFields = array_filter($parsedData, fn($value) => $value !== null && $value !== false);
+        $extractedUrls = count($urlIds);
+        
+        $context = json_encode([
+            'tournament_id' => $tournamentId,
+            'osu_topic_id' => $topicId,
+            'fields_extracted' => count($extractedFields),
+            'urls_extracted' => $extractedUrls,
+            'extraction_confidence' => $parsedData['extraction_confidence'] ?? [],
+            'url_types_found' => array_keys($urlIds)
+        ]);
+        
+        $logStmt->execute([
+            'INFO',
+            "Tournament data extracted and saved with " . count($extractedFields) . " fields, {$extractedUrls} URLs",
+            $context,
+            'Tournament::extractAndSaveFromRawData'
         ]);
     }
     
