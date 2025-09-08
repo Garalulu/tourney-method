@@ -270,6 +270,59 @@ class TournamentTest extends TestCase
         $this->assertEquals(123456, $tournament['osu_topic_id']);
         $this->assertEquals('Test Tournament 2025', $tournament['title']);
     }
+
+    
+    public function testFindPendingReviewReturnsEmptyWhenNoPendingTournaments()
+    {
+        $result = $this->tournament->findPendingReview();
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+    
+    public function testFindPendingReviewReturnsPendingTournaments()
+    {
+        // Create test tournaments with different statuses
+        $this->testDb->exec("
+            INSERT INTO tournaments (osu_topic_id, title, status, parsed_at) VALUES 
+            (12345, 'Test Tournament 1', 'pending_review', '2025-09-08 10:00:00'),
+            (12346, 'Test Tournament 2', 'approved', '2025-09-08 11:00:00'),
+            (12347, 'Test Tournament 3', 'pending_review', '2025-09-08 12:00:00'),
+            (12348, 'Test Tournament 4', 'rejected', '2025-09-08 13:00:00')
+        ");
+        
+        $result = $this->tournament->findPendingReview();
+        
+        // Should return only pending_review tournaments
+        $this->assertIsArray($result);
+        $this->assertCount(2, $result);
+        
+        // Check that only pending tournaments are returned
+        foreach ($result as $tournament) {
+            $this->assertArrayHasKey('id', $tournament);
+            $this->assertArrayHasKey('title', $tournament);
+            $this->assertArrayHasKey('parsed_at', $tournament);
+        }
+        
+        // Check ordering (newest first by parsed_at)
+        $this->assertEquals('Test Tournament 3', $result[0]['title']);
+        $this->assertEquals('Test Tournament 1', $result[1]['title']);
+    }
+    
+    public function testFindPendingReviewHandlesKoreanTitles()
+    {
+        // Test with Korean tournament titles
+        $this->testDb->exec("
+            INSERT INTO tournaments (osu_topic_id, title, status, parsed_at) VALUES 
+            (12345, '한국 토너먼트 테스트', 'pending_review', '2025-09-08 10:00:00'),
+            (12346, '오스 토너먼트 2025', 'pending_review', '2025-09-08 11:00:00')
+        ");
+        
+        $result = $this->tournament->findPendingReview();
+        
+        $this->assertCount(2, $result);
+        $this->assertEquals('오스 토너먼트 2025', $result[0]['title']);
+        $this->assertEquals('한국 토너먼트 테스트', $result[1]['title']);
+    }
     
     public function testTitleSanitization()
     {

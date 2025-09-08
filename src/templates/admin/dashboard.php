@@ -2,9 +2,24 @@
 // Admin Dashboard Template
 
 use TourneyMethod\Utils\SecurityHelper;
+use TourneyMethod\Utils\DateHelper;
+use TourneyMethod\Models\Tournament;
+
+// Include database configuration
+require_once __DIR__ . '/../../../config/database.php';
 
 // Get current admin user
 $currentUser = SecurityHelper::getCurrentAdminUser();
+
+// Get pending review tournaments
+$db = getDatabaseConnection();
+$tournamentModel = new Tournament($db);
+$pendingTournaments = $tournamentModel->findPendingReview();
+
+// Ensure CSRF token exists
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = SecurityHelper::generateCsrfToken();
+}
 ?>
 
 <div class="admin-dashboard">
@@ -30,32 +45,40 @@ $currentUser = SecurityHelper::getCurrentAdminUser();
         </div>
     </section>
     
-    <!-- Quick Actions -->
+    <!-- Tournament Review Table -->
     <section>
-        <h2>빠른 작업</h2>
-        <div class="grid">
-            <article>
-                <header><strong>토너먼트 관리</strong></header>
-                <p>토너먼트를 승인, 편집 또는 삭제할 수 있습니다.</p>
-                <footer>
-                    <a href="/admin/tournaments.php" role="button">토너먼트 관리</a>
-                </footer>
-            </article>
-            <article>
-                <header><strong>파서 관리</strong></header>
-                <p>forum post 파서를 실행하고 결과를 확인할 수 있습니다.</p>
-                <footer>
-                    <a href="/admin/parser.php" role="button" class="secondary">파서 실행</a>
-                </footer>
-            </article>
-            <article>
-                <header><strong>시스템 로그</strong></header>
-                <p>시스템 로그와 오류를 확인할 수 있습니다.</p>
-                <footer>
-                    <a href="/admin/logs.php" role="button" class="outline">로그 보기</a>
-                </footer>
-            </article>
-        </div>
+        <h2>검토 대기 토너먼트</h2>
+        <?php if (empty($pendingTournaments)): ?>
+            <div class="alert">
+                <p>현재 검토 대기 중인 토너먼트가 없습니다.</p>
+            </div>
+        <?php else: ?>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>토너먼트 제목</th>
+                            <th>파싱 날짜</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($pendingTournaments as $tournament): ?>
+                            <tr>
+                                <td><?= SecurityHelper::escapeHtml($tournament['title']) ?></td>
+                                <td><?= DateHelper::formatToKST($tournament['parsed_at']) ?></td>
+                                <td>
+                                    <a href="/admin/edit.php?id=<?= (int)$tournament['id'] ?>&csrf_token=<?= $_SESSION['csrf_token'] ?? '' ?>" 
+                                       role="button" 
+                                       class="small">편집</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <p><small>총 <?= count($pendingTournaments) ?>개의 토너먼트가 검토를 기다리고 있습니다.</small></p>
+        <?php endif; ?>
     </section>
     
     <!-- System Status -->

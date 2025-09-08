@@ -503,4 +503,26 @@ class Tournament
         
         return $tournament ?: null;
     }
+
+    /**
+     * Get all tournaments with pending review status
+     * Returns tournaments sorted by parsed_at DESC (newest first)
+     */
+    public function findPendingReview(): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                id,
+                title,
+                parsed_at
+            FROM tournaments 
+            WHERE status = 'pending_review'
+            ORDER BY parsed_at DESC
+        ");
+        
+        $stmt->execute();
+        $tournaments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        return $tournaments;
+    }
 }
