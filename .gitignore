@@ -116,3 +116,6 @@ development.ini
 .bmad-core
 .claude
 .gemini
+
+# serena mcp server
+.serena
