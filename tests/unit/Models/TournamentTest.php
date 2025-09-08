@@ -44,6 +44,19 @@ class TournamentTest extends TestCase
                 osu_topic_id INTEGER UNIQUE NOT NULL,
                 title VARCHAR(500) NOT NULL,
                 status VARCHAR(20) DEFAULT 'pending_review',
+                host_name VARCHAR(255),
+                mode VARCHAR(50),
+                rank_range VARCHAR(255),
+                registration_status VARCHAR(50),
+                badge_prize BOOLEAN DEFAULT 0,
+                start_date TEXT,
+                end_date TEXT,
+                banner_url TEXT,
+                registration_link TEXT,
+                discord_link TEXT,
+                sheet_link TEXT,
+                stream_link TEXT,
+                forum_link TEXT NOT NULL DEFAULT 'https://osu.ppy.sh/community/forums/topics/',
                 rank_range_min INTEGER,
                 rank_range_max INTEGER,
                 team_size INTEGER,
@@ -61,6 +74,10 @@ class TournamentTest extends TestCase
                 parsed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 approved_at DATETIME,
                 approved_by INTEGER,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                language_detected TEXT NOT NULL DEFAULT 'en',
+                parsed_terms_used TEXT,
                 
                 CHECK (status IN ('pending_review', 'approved', 'rejected', 'archived')),
                 CHECK (osu_topic_id > 0),
@@ -375,6 +392,317 @@ class TournamentTest extends TestCase
         $this->assertEquals(1, $logCount);
     }
     
+    // ====== STORY 1.6 TESTS: Tournament Edit & Approve Functionality ======
+    
+    public function testUpdateTournamentSuccess()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Original Tournament Title',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        // Update tournament data
+        $updateData = [
+            'title' => 'Updated Tournament Title',
+            'rank_range' => '#1,000 - #10,000',
+            'team_size' => '4',
+            'max_teams' => '32',
+            'start_date' => '2025-10-01T10:00',
+            'registration_close' => '2025-09-25T23:59',
+            'sheet_link' => 'https://docs.google.com/spreadsheets/d/test123456'
+        ];
+        
+        $result = $this->tournament->update($tournamentId, $updateData);
+        $this->assertTrue($result);
+        
+        // Verify the update
+        $updatedTournament = $this->tournament->findById($tournamentId);
+        $this->assertEquals('Updated Tournament Title', $updatedTournament['title']);
+        $this->assertEquals(1000, $updatedTournament['rank_range_min']);
+        $this->assertEquals(10000, $updatedTournament['rank_range_max']);
+        $this->assertEquals(4, $updatedTournament['team_size']);
+        $this->assertEquals(32, $updatedTournament['max_teams']);
+        $this->assertEquals('2025-10-01 10:00:00', $updatedTournament['tournament_start']);
+        $this->assertEquals('2025-09-25 23:59:00', $updatedTournament['registration_close']);
+        $this->assertEquals('test123456', $updatedTournament['google_sheet_id']);
+    }
+    
+    public function testUpdateTournamentWithEmptyTitleThrowsException()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Original Tournament Title',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Tournament title is required');
+        
+        $this->tournament->update($tournamentId, ['title' => '']);
+    }
+    
+    public function testUpdateTournamentWithInvalidTeamSizeThrowsException()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Team size must be a positive integer');
+        
+        $this->tournament->update($tournamentId, [
+            'title' => 'Test Tournament',
+            'team_size' => '-1'
+        ]);
+    }
+    
+    public function testUpdateTournamentWithInvalidMaxTeamsThrowsException()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Max teams must be a positive integer');
+        
+        $this->tournament->update($tournamentId, [
+            'title' => 'Test Tournament',
+            'max_teams' => '0'
+        ]);
+    }
+    
+    public function testUpdateTournamentWithInvalidURLThrowsException()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid URL format for sheet_link');
+        
+        $this->tournament->update($tournamentId, [
+            'title' => 'Test Tournament',
+            'sheet_link' => 'not-a-valid-url'
+        ]);
+    }
+    
+    public function testUpdateTournamentWithKoreanCharacters()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Original Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        // Update with Korean text
+        $updateData = [
+            'title' => '한국 토너먼트 테스트 2025',
+            'rank_range' => '#1,000 - #10,000'
+        ];
+        
+        $result = $this->tournament->update($tournamentId, $updateData);
+        $this->assertTrue($result);
+        
+        // Verify Korean text was saved correctly
+        $updatedTournament = $this->tournament->findById($tournamentId);
+        $this->assertEquals('한국 토너먼트 테스트 2025', $updatedTournament['title']);
+        $this->assertEquals(1000, $updatedTournament['rank_range_min']);
+        $this->assertEquals(10000, $updatedTournament['rank_range_max']);
+    }
+    
+    public function testUpdateTournamentWithNullFieldsHandling()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        // Update with some null/empty fields
+        $updateData = [
+            'title' => 'Updated Tournament',
+            'rank_range' => '#1,000 - #10,000',
+            'team_size' => '4',
+            'max_teams' => '32'
+        ];
+        
+        $result = $this->tournament->update($tournamentId, $updateData);
+        $this->assertTrue($result);
+        
+        // Verify the update was successful
+        $updatedTournament = $this->tournament->findById($tournamentId);
+        $this->assertEquals('Updated Tournament', $updatedTournament['title']);
+        $this->assertEquals(1000, $updatedTournament['rank_range_min']);
+        $this->assertEquals(10000, $updatedTournament['rank_range_max']);
+        $this->assertEquals(4, $updatedTournament['team_size']);
+        $this->assertEquals(32, $updatedTournament['max_teams']);
+    }
+    
+    public function testApproveTournamentSuccess()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        $adminUserId = 1;
+        
+        // Verify initial status
+        $tournament = $this->tournament->findById($tournamentId);
+        $this->assertEquals('pending_review', $tournament['status']);
+        $this->assertNull($tournament['approved_at']);
+        
+        // Approve tournament
+        $result = $this->tournament->approve($tournamentId, $adminUserId);
+        $this->assertTrue($result);
+        
+        // Verify approval
+        $approvedTournament = $this->tournament->findById($tournamentId);
+        $this->assertEquals('approved', $approvedTournament['status']);
+        $this->assertNotNull($approvedTournament['approved_at']);
+        $this->assertEquals($adminUserId, $approvedTournament['approved_by']);
+    }
+    
+    public function testApproveTournamentWithoutAdminId()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        // Approve tournament without specifying admin ID
+        $result = $this->tournament->approve($tournamentId);
+        $this->assertTrue($result);
+        
+        // Verify approval without admin ID
+        $approvedTournament = $this->tournament->findById($tournamentId);
+        $this->assertEquals('approved', $approvedTournament['status']);
+        $this->assertNotNull($approvedTournament['approved_at']);
+        $this->assertNull($approvedTournament['approved_by']);
+    }
+    
+    public function testUpdateAndApproveTournamentWorkflow()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        // First, update tournament data
+        $updateData = [
+            'title' => 'Updated and Approved Tournament',
+            'rank_range' => '#1,000 - #10,000',
+            'team_size' => '4',
+            'max_teams' => '32'
+        ];
+        
+        $updateResult = $this->tournament->update($tournamentId, $updateData);
+        $this->assertTrue($updateResult);
+        
+        // Then, approve the tournament
+        $approveResult = $this->tournament->approve($tournamentId, 1);
+        $this->assertTrue($approveResult);
+        
+        // Verify final state
+        $finalTournament = $this->tournament->findById($tournamentId);
+        $this->assertEquals('Updated and Approved Tournament', $finalTournament['title']);
+        $this->assertEquals(1000, $finalTournament['rank_range_min']);
+        $this->assertEquals(10000, $finalTournament['rank_range_max']);
+        $this->assertEquals(4, $finalTournament['team_size']);
+        $this->assertEquals(32, $finalTournament['max_teams']);
+        $this->assertEquals('approved', $finalTournament['status']);
+        $this->assertNotNull($finalTournament['approved_at']);
+        $this->assertEquals(1, $finalTournament['approved_by']);
+    }
+    
+    public function testSystemLogsCreatedOnTournamentUpdate()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        // Update tournament
+        $updateData = [
+            'title' => 'Updated Tournament',
+            'host_name' => 'New Host'
+        ];
+        
+        $this->tournament->update($tournamentId, $updateData);
+        
+        // Check that update log entry was created
+        $stmt = $this->testDb->prepare("SELECT COUNT(*) FROM system_logs WHERE source = ?");
+        $stmt->execute(['Tournament::update']);
+        
+        $logCount = $stmt->fetchColumn();
+        $this->assertEquals(1, $logCount);
+    }
+    
+    public function testSystemLogsCreatedOnTournamentApproval()
+    {
+        // Create test tournament
+        $forumPostData = [
+            'id' => 123456,
+            'title' => 'Test Tournament',
+            'content' => 'Tournament content here'
+        ];
+        
+        $tournamentId = $this->tournament->createFromForumPost($forumPostData);
+        
+        // Approve tournament
+        $this->tournament->approve($tournamentId, 1);
+        
+        // Check that approval log entry was created
+        $stmt = $this->testDb->prepare("SELECT COUNT(*) FROM system_logs WHERE source = ?");
+        $stmt->execute(['Tournament::approve']);
+        
+        $logCount = $stmt->fetchColumn();
+        $this->assertEquals(1, $logCount);
+    }
+
     /**
      * Helper method to create test tournaments
      */

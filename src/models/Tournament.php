@@ -525,4 +525,86 @@ class Tournament
         
         return $tournaments;
     }
+
+    /**
+     * Update tournament data
+     * @param int $id Tournament ID
+     * @param array $data Tournament data to update
+     * @return bool Success status
+     */
+    public function update($id, $data) {
+        try {
+            // Build dynamic SQL based on provided data
+            $setParts = [];
+            $params = ['id' => $id];
+            
+            $allowedFields = [
+                'title', 'rank_range_min', 'rank_range_max', 'team_size', 'max_teams',
+                'registration_open', 'registration_close', 'tournament_start',
+                'google_sheet_id', 'google_form_id', 'challonge_slug', 
+                'youtube_id', 'twitch_username'
+            ];
+            
+            foreach ($allowedFields as $field) {
+                if (array_key_exists($field, $data)) {
+                    $setParts[] = "$field = :$field";
+                    $params[$field] = $data[$field];
+                }
+            }
+            
+            // Handle special cases for form field mapping
+            if (isset($data['start_date'])) {
+                $setParts[] = "tournament_start = :tournament_start";
+                $params['tournament_start'] = $data['start_date'];
+            }
+            
+            if (isset($data['rank_range'])) {
+                // Parse rank range like "#1,000 - #10,000"
+                if (preg_match('/#?([\d,]+)\s*-\s*#?([\d,]+)/', $data['rank_range'], $matches)) {
+                    $setParts[] = "rank_range_min = :rank_range_min";
+                    $setParts[] = "rank_range_max = :rank_range_max";
+                    $params['rank_range_min'] = (int)str_replace(',', '', $matches[1]);
+                    $params['rank_range_max'] = (int)str_replace(',', '', $matches[2]);
+                }
+            }
+            
+            if (empty($setParts)) {
+                return true; // Nothing to update
+            }
+            
+            $sql = "UPDATE tournaments SET " . implode(', ', $setParts) . " WHERE id = :id";
+            $stmt = $this->db->prepare($sql);
+            
+            return $stmt->execute($params);
+        } catch (Exception $e) {
+            error_log("Tournament update failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Approve tournament by changing status to approved
+     * @param int $id Tournament ID
+     * @param int $approvedBy Admin user ID who approved
+     * @return bool Success status
+     */
+    public function approve($id, $approvedBy = null) {
+        try {
+            $sql = "UPDATE tournaments SET 
+                    status = 'approved', 
+                    approved_at = datetime('now', '+9 hours'),
+                    approved_by = :approved_by
+                    WHERE id = :id";
+            
+            $stmt = $this->db->prepare($sql);
+            
+            return $stmt->execute([
+                'id' => $id,
+                'approved_by' => $approvedBy
+            ]);
+        } catch (Exception $e) {
+            error_log("Tournament approval failed: " . $e->getMessage());
+            return false;
+        }
+    }
 }
