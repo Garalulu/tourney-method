@@ -281,4 +281,43 @@ class AdminUser
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s')
         ];
     }
+
+    /**
+     * Save user to database (upsert based on osu_id)
+     * 
+     * @param \PDO $db Database connection
+     * @return int Database user ID
+     */
+    public function saveToDatabase(\PDO $db): int
+    {
+        // Check if user exists
+        $stmt = $db->prepare("SELECT id FROM users WHERE osu_id = ?");
+        $stmt->execute([$this->osuId]);
+        $existingUser = $stmt->fetch();
+        
+        if ($existingUser) {
+            // Update existing user
+            $stmt = $db->prepare("
+                UPDATE users 
+                SET username = ?, is_admin = ?, last_login = datetime('now', '+9 hours')
+                WHERE osu_id = ?
+            ");
+            $stmt->execute([$this->username, $this->isAdmin ? 1 : 0, $this->osuId]);
+            
+            // Update the userId property
+            $this->userId = (int)$existingUser['id'];
+            return $this->userId;
+        } else {
+            // Create new user
+            $stmt = $db->prepare("
+                INSERT INTO users (osu_id, username, is_admin, created_at, last_login) 
+                VALUES (?, ?, ?, datetime('now', '+9 hours'), datetime('now', '+9 hours'))
+            ");
+            $stmt->execute([$this->osuId, $this->username, $this->isAdmin ? 1 : 0]);
+            
+            // Update the userId property
+            $this->userId = (int)$db->lastInsertId();
+            return $this->userId;
+        }
+    }
 }

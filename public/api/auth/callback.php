@@ -50,6 +50,11 @@ function handleOAuthCallback(): void
         // Create and validate admin user
         $adminUser = AdminUser::authorizeAdmin($userInfo);
         
+        // Save user to database to get proper database ID
+        require_once __DIR__ . '/../../../config/database.php';
+        $db = getDatabaseConnection();
+        $adminUser->saveToDatabase($db);
+        
         // Create secure session
         $sessionId = $adminUser->createSession();
         

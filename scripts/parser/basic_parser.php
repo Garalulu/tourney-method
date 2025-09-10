@@ -20,6 +20,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use TourneyMethod\Utils\EnvLoader;
 use TourneyMethod\Services\OsuForumService;
 use TourneyMethod\Models\Tournament;
+use TourneyMethod\Models\ParserStatus;
 use TourneyMethod\Config\OsuApi;
 use PDO;
 
@@ -28,9 +29,10 @@ use PDO;
  */
 class BasicTournamentParser
 {
-    private PDO $db;
+    private ?PDO $db;
     private OsuForumService $forumService;
     private Tournament $tournamentModel;
+    private ParserStatus $parserStatus;
     private int $processedCount = 0;
     private int $skippedCount = 0;
     private int $errorCount = 0;
@@ -38,8 +40,14 @@ class BasicTournamentParser
     public function __construct()
     {
         $this->initializeDatabase();
+        
+        if (!$this->db) {
+            throw new \Exception("Failed to initialize database connection");
+        }
+        
         $this->forumService = new OsuForumService($this->db);
         $this->tournamentModel = new Tournament($this->db);
+        $this->parserStatus = new ParserStatus($this->db);
     }
     
     /**
@@ -62,6 +70,12 @@ class BasicTournamentParser
             
             if (!isset($topicsData['topics']) || empty($topicsData['topics'])) {
                 $this->logWarning("No topics found in API response");
+                // Still consider this a successful run, just with no data
+                $this->parserStatus->recordRunSuccess([
+                    'processed' => 0,
+                    'skipped' => 0,
+                    'errors' => 0
+                ]);
                 return;
             }
             
@@ -74,12 +88,22 @@ class BasicTournamentParser
             
             $this->logInfo("Parser completed. Processed: {$this->processedCount}, Skipped: {$this->skippedCount}, Errors: {$this->errorCount}");
             
+            // Record successful completion
+            $this->parserStatus->recordRunSuccess([
+                'processed' => $this->processedCount,
+                'skipped' => $this->skippedCount,
+                'errors' => $this->errorCount
+            ]);
+            
         } catch (Exception $e) {
             $this->logError("Parser failed: " . $e->getMessage(), [
                 'exception' => get_class($e),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
+            
+            // Record failed run
+            $this->parserStatus->recordRunFailure($e->getMessage());
             
             exit(1);
         } finally {
@@ -215,8 +239,17 @@ class BasicTournamentParser
         try {
             EnvLoader::load();
             
-            // Database path - use persistent storage path for App Platform compatibility
-            $dbPath = $_ENV['DB_PATH'] ?? __DIR__ . '/../../data/tournament_method.db';
+            // Database path - resolve relative paths from project root, not current working directory
+            $envDbPath = $_ENV['DB_PATH'] ?? './data/tournament_method.db';
+            
+            if (str_starts_with($envDbPath, './') || str_starts_with($envDbPath, '../')) {
+                // Relative path: resolve from project root (2 levels up from this script)
+                $projectRoot = dirname(__DIR__, 2);
+                $dbPath = $projectRoot . '/' . ltrim($envDbPath, './');
+            } else {
+                // Absolute path: use as-is
+                $dbPath = $envDbPath;
+            }
             
             // Create directory if it doesn't exist
             $dbDir = dirname($dbPath);
@@ -248,7 +281,9 @@ class BasicTournamentParser
     {
         try {
             // Close database connection
-            $this->db = null;
+            if ($this->db) {
+                $this->db = null;
+            }
             
             $this->logDebug("Parser cleanup completed");
             
@@ -294,7 +329,9 @@ class BasicTournamentParser
      */
     private function log(string $level, string $message, array $context = []): void
     {
-        $timestamp = date('Y-m-d H:i:s');
+        // Use KST timezone for all timestamps
+        $kstTime = new \DateTime('now', new \DateTimeZone('Asia/Seoul'));
+        $timestamp = $kstTime->format('Y-m-d H:i:s');
         $contextStr = empty($context) ? '' : ' | ' . json_encode($context, JSON_UNESCAPED_UNICODE);
         
         // Console output
@@ -304,15 +341,16 @@ class BasicTournamentParser
         if (isset($this->db)) {
             try {
                 $stmt = $this->db->prepare("
-                    INSERT INTO system_logs (level, message, context, source) 
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO system_logs (level, message, context, source, created_at) 
+                    VALUES (?, ?, ?, ?, ?)
                 ");
                 
                 $stmt->execute([
                     $level,
                     $message,
                     empty($context) ? null : json_encode($context, JSON_UNESCAPED_UNICODE),
-                    'BasicTournamentParser'
+                    'BasicTournamentParser',
+                    $timestamp
                 ]);
                 
             } catch (Exception $e) {

@@ -607,4 +607,122 @@ class Tournament
             return false;
         }
     }
+    
+    /**
+     * Enhanced tournament search with multiple filters
+     * 
+     * @param array $filters Filters: status, search, limit, offset, mode
+     * @return array Array of tournaments
+     */
+    public function findWithFilters(array $filters = []): array
+    {
+        $sql = "SELECT 
+                    id,
+                    osu_topic_id,
+                    title,
+                    status,
+                    rank_range_min,
+                    rank_range_max,
+                    team_size,
+                    tournament_start,
+                    registration_close,
+                    parsed_at,
+                    approved_at,
+                    approved_by
+                FROM tournaments WHERE 1=1";
+        
+        $params = [];
+        
+        // Filter by status
+        if (!empty($filters['status'])) {
+            $sql .= " AND status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        // Search by title or host
+        if (!empty($filters['search'])) {
+            $sql .= " AND (title LIKE ? OR raw_post_content LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        // Order by parsed date (newest first)
+        $sql .= " ORDER BY parsed_at DESC";
+        
+        // Pagination
+        if (isset($filters['limit'])) {
+            $sql .= " LIMIT ?";
+            $params[] = (int)$filters['limit'];
+            
+            if (isset($filters['offset'])) {
+                $sql .= " OFFSET ?";
+                $params[] = (int)$filters['offset'];
+            }
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Update tournament status with enhanced status options
+     * 
+     * @param int $tournamentId Tournament ID
+     * @param string $status New status
+     * @param int|null $adminUserId Admin user making the change
+     * @return bool Success status
+     */
+    public function updateTournamentStatus(int $tournamentId, string $status, ?int $adminUserId = null): bool
+    {
+        // Valid statuses for tournament management
+        $validStatuses = [
+            self::STATUS_PENDING,
+            self::STATUS_APPROVED, 
+            self::STATUS_REJECTED,
+            self::STATUS_ARCHIVED,
+            'cancelled'
+        ];
+        
+        if (!in_array($status, $validStatuses)) {
+            throw new \InvalidArgumentException('Invalid tournament status: ' . $status);
+        }
+        
+        $sql = "UPDATE tournaments SET status = ?";
+        $params = [$status];
+        
+        if ($status === self::STATUS_APPROVED && $adminUserId) {
+            $sql .= ", approved_at = datetime('now', '+9 hours'), approved_by = ?";
+            $params[] = $adminUserId;
+        }
+        
+        $sql .= " WHERE id = ?";
+        $params[] = $tournamentId;
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($params);
+    }
+    
+    /**
+     * Get tournament statistics for admin dashboard
+     * 
+     * @return array Status counts
+     */
+    public function getTournamentStatistics(): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                status,
+                COUNT(*) as count,
+                MAX(parsed_at) as latest_parsed
+            FROM tournaments 
+            GROUP BY status
+            ORDER BY count DESC
+        ");
+        
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

@@ -18,7 +18,7 @@ $status = [
 
 try {
     // Database connectivity check
-    $dbPath = __DIR__ . '/../data/database/tournaments.db';
+    $dbPath = __DIR__ . '/../data/tournament_method.db';
     if (!file_exists($dbPath)) {
         throw new Exception('Database file not found');
     }

@@ -191,7 +191,7 @@ $_SESSION['csrf_token'] = $csrfToken;
                 <div class="form-group">
                     <label>현재 상태</label>
                     <p><mark><?= SecurityHelper::escapeHtml($tournament['status']) ?></mark></p>
-                    <small>파싱 날짜: <?= DateHelper::formatToKST($tournament['parsed_at'] ?? '') ?></small>
+                    <small>파싱 날짜: <?= DateHelper::formatKST($tournament['parsed_at'] ?? '') ?></small>
                 </div>
                 
                 <div class="form-group">

@@ -66,7 +66,7 @@ if (!isset($_SESSION['csrf_token'])) {
                         <?php foreach ($pendingTournaments as $tournament): ?>
                             <tr>
                                 <td><?= SecurityHelper::escapeHtml($tournament['title']) ?></td>
-                                <td><?= DateHelper::formatToKST($tournament['parsed_at']) ?></td>
+                                <td><?= DateHelper::formatKST($tournament['parsed_at']) ?></td>
                                 <td>
                                     <a href="/admin/edit.php?id=<?= (int)$tournament['id'] ?>&csrf_token=<?= $_SESSION['csrf_token'] ?? '' ?>" 
                                        role="button" 

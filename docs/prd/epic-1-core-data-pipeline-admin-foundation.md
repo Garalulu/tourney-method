@@ -68,12 +68,41 @@
     5.  The form is protected against CSRF attacks.
 
 ---
-**Story 1.7: Error Logging**
+**Story 1.7: System Logs Viewer**
 *   As a Site Administrator,
-*   I want: The system to automatically log any errors from the parser,
+*   I want: To view system logs and parser errors in the admin panel,
 *   So that: I can diagnose problems with the data pipeline.
 *   **Acceptance Criteria:**
-    1.  When the parser script fails (e.g., cannot connect to the API), it writes a descriptive error to the `system_logs` table.
-    2.  A new page in the admin panel, "System Logs," displays the contents of the `system_logs` table.
+    1.  A protected admin page "/admin/logs.php" displays system logs from the database.
+    2.  Logs are displayed in reverse chronological order (newest first).
+    3.  Log entries show timestamp (KST), severity level, component, and message.
+    4.  The page includes filtering by log level (error, warning, info, debug).
+    5.  Parser errors are automatically logged to system_logs table with descriptive messages.
+
+---
+**Story 1.8: Tournament Management Dashboard**
+*   As a Site Administrator,
+*   I want: To view, edit, and manage all tournaments regardless of status,
+*   So that: I can handle tournament updates, corrections, extensions, and status changes for operational needs.
+*   **Acceptance Criteria:**
+    1.  A protected admin page "/admin/tournaments.php" displays all tournaments in a searchable table.
+    2.  The table shows Tournament Title, Status, Host, Registration Status, Parse Date, and Actions.
+    3.  Each row includes action buttons: View Details, Edit Tournament, Change Status.
+    4.  "Edit Tournament" opens the same edit form as Story 1.6 but accessible for all tournament statuses.
+    5.  Tournament status can be changed between: pending_review, approved, rejected, extended, cancelled.
+    6.  The page includes filtering by tournament status, game mode, and search by title/host.
+    7.  Edit capabilities include all tournament fields: title, host, dates, links, rank range, etc.
+
+---
+**Story 1.9: Parser Management Interface**
+*   As a Site Administrator, 
+*   I want: To control the parser schedule and monitor parsing activity,
+*   So that: I can manage automated data collection and troubleshoot parsing issues.
+*   **Acceptance Criteria:**
+    1.  A protected admin page "/admin/parser.php" displays parser status and controls.
+    2.  Shows last run time, next scheduled run, and recent parsing statistics.
+    3.  Includes manual "Run Parser Now" button for immediate execution.
+    4.  Allows toggling parser activation (active/paused) for maintenance.
+    5.  Displays recent parsing activity log with success/failure counts.
 
 ---

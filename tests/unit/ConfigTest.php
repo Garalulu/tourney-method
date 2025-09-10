@@ -34,7 +34,7 @@ class ConfigTest extends TestCase
         $this->assertArrayHasKey('options', $config['database']);
         
         $dbPath = $config['database']['path'];
-        $this->assertStringContainsString('tournaments.db', $dbPath);
+        $this->assertStringContainsString('tournament_method.db', $dbPath);
     }
 
     public function testSecurityConfigDefaults(): void

@@ -7,7 +7,7 @@
 
 return [
     'database' => [
-        'path' => __DIR__ . '/../data/database/tournaments.db',
+        'path' => __DIR__ . '/../data/tournament_method.db',
         'options' => [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
