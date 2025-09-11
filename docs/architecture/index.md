@@ -1,5 +1,18 @@
 # Tourney Method Fullstack Architecture Document
 
+## Architecture Overview
+
+This document describes the current architecture of Tourney Method (v1.3), a comprehensive osu! tournament discovery platform. Recent enhancements include advanced metadata extraction, star rating parsing, Discord integration, secure session management, and normalized data models.
+
+**Latest Updates (September 2025):**
+- Enhanced ForumPostParserService with confidence scoring
+- Comprehensive tournament metadata extraction
+- Star rating parsing from tournament brackets  
+- Discord link extraction and integration
+- Registration date parsing with format normalization
+- Database schema migrations with new fields
+- Improved security with CSRF protection and rate limiting
+
 ## Table of Contents
 
 - [Tourney Method Fullstack Architecture Document](#table-of-contents)

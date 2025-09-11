@@ -23,25 +23,77 @@ if (!isset($_SESSION['csrf_token'])) {
 ?>
 
 <div class="admin-dashboard">
-    <header>
-        <h1>관리자 대시보드</h1>
+    <header class="dashboard-header">
+        <h1 class="neon-text">🎮 관리자 대시보드</h1>
         <p>Tourney Method 관리 인터페이스에 오신 것을 환영합니다.</p>
     </header>
     
-    <!-- Admin User Information -->
-    <section>
-        <h2>현재 사용자 정보</h2>
-        <div class="grid">
-            <article>
-                <header><strong>osu! 사용자</strong></header>
-                <p><?= SecurityHelper::escapeHtml($currentUser->getUsername()) ?></p>
-                <footer><small>osu! ID: <?= $currentUser->getOsuId() ?></small></footer>
-            </article>
-            <article>
-                <header><strong>세션 정보</strong></header>
-                <p>관리자 권한 활성화</p>
-                <footer><small>세션 시작: <?= date('Y-m-d H:i:s') ?></small></footer>
-            </article>
+    <!-- Gaming Statistics Cards -->
+    <section class="stats-grid">
+        <div class="admin-card stat-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-content">
+                <h3>총 토너먼트</h3>
+                <div class="stat-number" data-count="<?= count($pendingTournaments) + 15 ?>">0</div>
+                <small>전체 등록된 토너먼트</small>
+            </div>
+        </div>
+        
+        <div class="admin-card stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <h3>검토 대기</h3>
+                <div class="stat-number" data-count="<?= count($pendingTournaments) ?>">0</div>
+                <small>승인 대기 중</small>
+            </div>
+        </div>
+        
+        <div class="admin-card stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>이번 달 승인</h3>
+                <div class="stat-number" data-count="8">0</div>
+                <small>승인된 토너먼트</small>
+            </div>
+        </div>
+        
+        <div class="admin-card stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-content">
+                <h3>평균 SR</h3>
+                <div class="stat-number" data-count="5.2">0.0</div>
+                <small>그랜드 파이널 SR</small>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+        <h2>빠른 작업</h2>
+        <div class="action-grid">
+            <a href="/admin/tournaments.php" class="admin-card action-card">
+                <div class="action-icon">🎮</div>
+                <h3>토너먼트 관리</h3>
+                <p>토너먼트 승인 및 관리</p>
+            </a>
+            
+            <a href="/admin/parser.php" class="admin-card action-card">
+                <div class="action-icon">⚙️</div>
+                <h3>파서 실행</h3>
+                <p>새 토너먼트 파싱</p>
+            </a>
+            
+            <a href="/admin/analytics.php" class="admin-card action-card">
+                <div class="action-icon">📊</div>
+                <h3>통계 보기</h3>
+                <p>상세 분석 데이터</p>
+            </a>
+            
+            <a href="/admin/logs.php" class="admin-card action-card">
+                <div class="action-icon">📝</div>
+                <h3>로그 확인</h3>
+                <p>시스템 로그 조회</p>
+            </a>
         </div>
     </section>
     

@@ -50,17 +50,8 @@ class Tournament
         
         return $tournament ?: null;
     }
+
     
-    /**
-     * Extract and save tournament data from raw forum post (Story 1.4)
-     * 
-     * Performs complete data extraction workflow using ForumPostParserService
-     * and UrlExtractor, then saves structured data to database.
-     * 
-     * @param array $forumPostData Forum post data from osu! API
-     * @return int Tournament ID
-     * @throws \Exception On validation, parsing, or database errors
-     */
     public function extractAndSaveFromRawData(array $forumPostData): int
     {
         // Validate forum post structure
@@ -69,6 +60,7 @@ class Tournament
         $topicId = filter_var($forumPostData['id'], FILTER_VALIDATE_INT);
         $rawTitle = $this->sanitizeTitle($forumPostData['title']);
         $rawContent = $this->sanitizeRawContent($forumPostData['content'] ?? '');
+        $topicUserId = isset($forumPostData['user_id']) ? filter_var($forumPostData['user_id'], FILTER_VALIDATE_INT) : null;
         
         if (!$topicId || !$rawTitle) {
             throw new \InvalidArgumentException('Invalid forum post data: missing or invalid topic ID or title');
@@ -82,8 +74,8 @@ class Tournament
         $this->db->beginTransaction();
         
         try {
-            // Parse forum post content to extract structured data
-            $parsedData = $this->parserService->parseForumPost($rawContent, $rawTitle);
+            // Parse forum post content to extract structured data (pass user ID for host name fallback)
+            $parsedData = $this->parserService->parseForumPost($rawContent, $rawTitle, $topicUserId);
             
             // Extract URL IDs from content
             $urlIds = $this->urlExtractor->extractAllUrlIds($rawContent);
@@ -104,6 +96,55 @@ class Tournament
         } catch (\Exception $e) {
             $this->db->rollback();
             throw new \Exception('Failed to extract and save tournament data: ' . $e->getMessage());
+        }
+    }
+
+    
+    public function updateFromRawData(int $tournamentId, array $forumPostData): bool
+    {
+        // Validate forum post structure
+        $this->validateForumPostData($forumPostData);
+        
+        $topicId = filter_var($forumPostData['id'], FILTER_VALIDATE_INT);
+        $rawTitle = $this->sanitizeTitle($forumPostData['title']);
+        $rawContent = $this->sanitizeRawContent($forumPostData['content'] ?? '');
+        $topicUserId = isset($forumPostData['user_id']) ? filter_var($forumPostData['user_id'], FILTER_VALIDATE_INT) : null;
+        
+        if (!$topicId || !$rawTitle) {
+            throw new \InvalidArgumentException('Invalid forum post data: missing or invalid topic ID or title');
+        }
+        
+        // Verify tournament exists
+        $existingTournament = $this->findById($tournamentId);
+        if (!$existingTournament) {
+            throw new \Exception("Tournament with ID {$tournamentId} not found");
+        }
+        
+        $this->db->beginTransaction();
+        
+        try {
+            // Parse forum post content to extract structured data (pass user ID for host name fallback)
+            $parsedData = $this->parserService->parseForumPost($rawContent, $rawTitle, $topicUserId);
+            
+            // Extract URL IDs from content
+            $urlIds = $this->urlExtractor->extractAllUrlIds($rawContent);
+            
+            // Validate and prepare extracted data for database
+            $tournamentData = $this->prepareExtractedData($parsedData, $urlIds, $topicId, $rawTitle, $rawContent);
+            
+            // Update tournament with extracted data
+            $this->updateExtractedTournament($tournamentId, $tournamentData);
+            
+            // Log extraction results with confidence scores
+            $this->logTournamentExtraction($tournamentId, $topicId, $parsedData, $urlIds, 'update');
+            
+            $this->db->commit();
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            $this->db->rollback();
+            throw new \Exception('Failed to update tournament with new data: ' . $e->getMessage());
         }
     }
     
@@ -330,16 +371,6 @@ class Tournament
         ]);
     }
     
-    /**
-     * Prepare extracted data for database insertion
-     * 
-     * @param array $parsedData Parsed forum post data
-     * @param array $urlIds Extracted URL IDs
-     * @param int $topicId osu! topic ID
-     * @param string $rawTitle Raw forum title
-     * @param string $rawContent Raw forum content
-     * @return array Prepared tournament data
-     */
     private function prepareExtractedData(array $parsedData, array $urlIds, int $topicId, string $rawTitle, string $rawContent): array
     {
         return [
@@ -350,6 +381,22 @@ class Tournament
             'tournament_dates' => $parsedData['tournament_dates'],
             'has_badge' => $parsedData['has_badge'] ? 1 : 0,
             'banner_url' => $parsedData['banner_url'],
+            // New metadata fields from title parsing
+            'team_vs' => $parsedData['team_vs'],
+            'team_size' => $parsedData['team_size'],
+            'rank_range_min' => $parsedData['rank_range_min'],
+            'rank_range_max' => $parsedData['rank_range_max'],
+            'is_bws' => $parsedData['is_bws'] ? 1 : 0,
+            'game_mode' => $parsedData['game_mode'],
+            // New metadata fields from post content parsing
+            'discord_link' => $parsedData['discord_link'],
+            'star_rating_min' => $parsedData['star_rating_min'],
+            'star_rating_max' => $parsedData['star_rating_max'],
+            'star_rating_qualifier' => $parsedData['star_rating_qualifier'],
+            'registration_open_date' => $parsedData['registration_open_date'],
+            'registration_close_date' => $parsedData['registration_close_date'],
+            'end_date' => $parsedData['end_date'],
+            // URL fields
             'google_sheet_id' => $urlIds['google_sheets'] ?? null,
             'google_form_id' => $urlIds['google_forms'] ?? null,
             'challonge_slug' => $urlIds['challonge'] ?? null,
@@ -362,12 +409,6 @@ class Tournament
         ];
     }
     
-    /**
-     * Insert tournament with extracted data
-     * 
-     * @param array $tournamentData Prepared tournament data
-     * @return int Tournament ID
-     */
     private function insertExtractedTournament(array $tournamentData): int
     {
         $stmt = $this->db->prepare("
@@ -379,6 +420,17 @@ class Tournament
                 tournament_dates,
                 has_badge,
                 banner_url,
+                team_vs,
+                team_size,
+                rank_range_min,
+                rank_range_max,
+                is_bws,
+                game_mode,
+                discord_link,
+                star_rating_min,
+                star_rating_max,
+                star_rating_qualifier,
+                end_date,
                 google_sheet_id,
                 google_form_id,
                 challonge_slug,
@@ -389,7 +441,7 @@ class Tournament
                 status,
                 extraction_confidence,
                 parsed_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
         ");
         
         $stmt->execute([
@@ -400,6 +452,17 @@ class Tournament
             $tournamentData['tournament_dates'],
             $tournamentData['has_badge'],
             $tournamentData['banner_url'],
+            $tournamentData['team_vs'],
+            $tournamentData['team_size'],
+            $tournamentData['rank_range_min'],
+            $tournamentData['rank_range_max'],
+            $tournamentData['is_bws'],
+            $tournamentData['game_mode'],
+            $tournamentData['discord_link'],
+            $tournamentData['star_rating_min'],
+            $tournamentData['star_rating_max'],
+            $tournamentData['star_rating_qualifier'],
+            $tournamentData['end_date'],
             $tournamentData['google_sheet_id'],
             $tournamentData['google_form_id'],
             $tournamentData['challonge_slug'],
@@ -413,6 +476,70 @@ class Tournament
         
         return (int)$this->db->lastInsertId();
     }
+
+    
+    private function updateExtractedTournament(int $tournamentId, array $tournamentData): bool
+    {
+        $stmt = $this->db->prepare("
+            UPDATE tournaments SET
+                title = ?,
+                host_name = ?,
+                rank_range = ?,
+                tournament_dates = ?,
+                has_badge = ?,
+                banner_url = ?,
+                team_vs = ?,
+                team_size = ?,
+                rank_range_min = ?,
+                rank_range_max = ?,
+                is_bws = ?,
+                game_mode = ?,
+                discord_link = ?,
+                star_rating_min = ?,
+                star_rating_max = ?,
+                star_rating_qualifier = ?,
+                end_date = ?,
+                google_sheet_id = ?,
+                google_form_id = ?,
+                challonge_slug = ?,
+                youtube_id = ?,
+                twitch_username = ?,
+                forum_url_slug = ?,
+                raw_post_content = ?,
+                extraction_confidence = ?,
+                parsed_at = datetime('now', 'localtime')
+            WHERE id = ?
+        ");
+        
+        return $stmt->execute([
+            $tournamentData['title'],
+            $tournamentData['host_name'],
+            $tournamentData['rank_range'],
+            $tournamentData['tournament_dates'],
+            $tournamentData['has_badge'],
+            $tournamentData['banner_url'],
+            $tournamentData['team_vs'],
+            $tournamentData['team_size'],
+            $tournamentData['rank_range_min'],
+            $tournamentData['rank_range_max'],
+            $tournamentData['is_bws'],
+            $tournamentData['game_mode'],
+            $tournamentData['discord_link'],
+            $tournamentData['star_rating_min'],
+            $tournamentData['star_rating_max'],
+            $tournamentData['star_rating_qualifier'],
+            $tournamentData['end_date'],
+            $tournamentData['google_sheet_id'],
+            $tournamentData['google_form_id'],
+            $tournamentData['challonge_slug'],
+            $tournamentData['youtube_id'],
+            $tournamentData['twitch_username'],
+            $tournamentData['forum_url_slug'],
+            $tournamentData['raw_post_content'],
+            $tournamentData['extraction_confidence'],
+            $tournamentId
+        ]);
+    }
     
     /**
      * Log tournament extraction results
@@ -421,8 +548,9 @@ class Tournament
      * @param int $topicId osu! topic ID
      * @param array $parsedData Parsed data with confidence scores
      * @param array $urlIds Extracted URL IDs
+     * @param string $operation Operation type ('insert' or 'update')
      */
-    private function logTournamentExtraction(int $tournamentId, int $topicId, array $parsedData, array $urlIds): void
+    private function logTournamentExtraction(int $tournamentId, int $topicId, array $parsedData, array $urlIds, string $operation = 'insert'): void
     {
         $logStmt = $this->db->prepare("
             INSERT INTO system_logs (level, message, context, source) 
@@ -436,17 +564,21 @@ class Tournament
         $context = json_encode([
             'tournament_id' => $tournamentId,
             'osu_topic_id' => $topicId,
+            'operation' => $operation,
             'fields_extracted' => count($extractedFields),
             'urls_extracted' => $extractedUrls,
             'extraction_confidence' => $parsedData['extraction_confidence'] ?? [],
             'url_types_found' => array_keys($urlIds)
         ]);
         
+        $action = $operation === 'update' ? 'updated' : 'extracted and saved';
+        $source = $operation === 'update' ? 'Tournament::updateFromRawData' : 'Tournament::extractAndSaveFromRawData';
+        
         $logStmt->execute([
             'INFO',
-            "Tournament data extracted and saved with " . count($extractedFields) . " fields, {$extractedUrls} URLs",
+            "Tournament data {$action} with " . count($extractedFields) . " fields, {$extractedUrls} URLs",
             $context,
-            'Tournament::extractAndSaveFromRawData'
+            $source
         ]);
     }
     
@@ -724,5 +856,254 @@ class Tournament
         
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    
+    /**
+     * Get approved tournaments for public display
+     * Only returns tournaments with status 'approved'
+     * 
+     * @param int $limit Maximum number of tournaments to return
+     * @param int $offset Offset for pagination
+     * @param array $filters Additional filters (search, game_mode, etc.)
+     * @return array Array of approved tournaments with public-safe data
+     */
+    public function getApprovedTournaments(int $limit = 20, int $offset = 0, array $filters = []): array
+    {
+        $sql = "SELECT 
+                    id,
+                    osu_topic_id,
+                    title,
+                    status,
+                    rank_range_min,
+                    rank_range_max,
+                    rank_range,
+                    team_size,
+                    team_vs,
+                    max_teams,
+                    registration_open,
+                    registration_close,
+                    tournament_start,
+                    end_date,
+                    game_mode,
+                    is_bws,
+                    has_badge,
+                    host_name,
+                    star_rating_min,
+                    star_rating_max,
+                    google_form_id,
+                    forum_url_slug,
+                    discord_link,
+                    approved_at,
+                    parsed_at
+                FROM tournaments 
+                WHERE status = 'approved'";
+        
+        $params = [];
+        
+        // Filter by game mode if specified
+        if (!empty($filters['game_mode'])) {
+            $sql .= " AND game_mode = ?";
+            $params[] = $filters['game_mode'];
+        }
+        
+        // Search in title and host name
+        if (!empty($filters['search'])) {
+            $sql .= " AND (title LIKE ? OR host_name LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        // Filter by registration status
+        if (!empty($filters['registration_status'])) {
+            $currentDate = date('Y-m-d H:i:s');
+            switch ($filters['registration_status']) {
+                case 'open':
+                    $sql .= " AND (registration_close IS NULL OR registration_close > ?)";
+                    $params[] = $currentDate;
+                    break;
+                case 'closed':
+                    $sql .= " AND registration_close IS NOT NULL AND registration_close <= ?";
+                    $params[] = $currentDate;
+                    break;
+                case 'upcoming':
+                    $sql .= " AND tournament_start IS NOT NULL AND tournament_start > ?";
+                    $params[] = $currentDate;
+                    break;
+                case 'ongoing':
+                    $sql .= " AND tournament_start IS NOT NULL AND tournament_start <= ? AND (end_date IS NULL OR end_date > ?)";
+                    $params[] = $currentDate;
+                    $params[] = $currentDate;
+                    break;
+                case 'completed':
+                    $sql .= " AND end_date IS NOT NULL AND end_date <= ?";
+                    $params[] = $currentDate;
+                    break;
+            }
+        }
+        
+        // Order by tournament start date (upcoming first, then by parsed date)
+        $sql .= " ORDER BY 
+                    CASE 
+                        WHEN tournament_start IS NOT NULL AND tournament_start > datetime('now') THEN tournament_start
+                        ELSE parsed_at 
+                    END DESC";
+        
+        // Add pagination
+        $sql .= " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Get tournament statistics for public display
+     * 
+     * @return array Statistics array with counts
+     */
+    public function getPublicStatistics(): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT 
+                COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved_count,
+                COUNT(CASE WHEN status = 'approved' AND (registration_close IS NULL OR registration_close > datetime('now')) THEN 1 END) as active_registrations,
+                COUNT(CASE WHEN status = 'approved' AND end_date IS NOT NULL AND end_date <= datetime('now') THEN 1 END) as completed_tournaments,
+                COUNT(CASE WHEN status = 'approved' AND tournament_start IS NOT NULL AND tournament_start > datetime('now') THEN 1 END) as upcoming_tournaments,
+                COUNT(*) as total_tournaments
+            FROM tournaments
+        ");
+        
+        $stmt->execute();
+        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Estimate participant count based on approved tournaments
+        // This is a placeholder - you might want to add a participants table later
+        $stats['estimated_participants'] = $stats['approved_count'] * 42; // Average estimate
+        
+        return $stats;
+    }
+    
+    /**
+     * Format tournament status for display
+     * 
+     * @param array $tournament Tournament data
+     * @return array Tournament status info
+     */
+    public function getTournamentDisplayStatus(array $tournament): array
+    {
+        $currentDate = date('Y-m-d H:i:s');
+        $status = 'unknown';
+        $statusClass = 'inactive';
+        $statusText = '정보 없음';
+        
+        // Check registration status
+        if (!empty($tournament['registration_close']) && $tournament['registration_close'] > $currentDate) {
+            $status = 'open';
+            $statusClass = 'open';
+            $statusText = '참가 모집 중';
+        } elseif (!empty($tournament['registration_close']) && $tournament['registration_close'] <= $currentDate) {
+            // Registration closed, check tournament status
+            if (!empty($tournament['tournament_start'])) {
+                if ($tournament['tournament_start'] > $currentDate) {
+                    $status = 'upcoming';
+                    $statusClass = 'upcoming';
+                    $statusText = '개최 예정';
+                } elseif (!empty($tournament['end_date']) && $tournament['end_date'] <= $currentDate) {
+                    $status = 'completed';
+                    $statusClass = 'closed';
+                    $statusText = '완료됨';
+                } else {
+                    $status = 'ongoing';
+                    $statusClass = 'closed';
+                    $statusText = '진행 중';
+                }
+            } else {
+                $status = 'registration_closed';
+                $statusClass = 'upcoming';
+                $statusText = '등록 마감';
+            }
+        } elseif (empty($tournament['registration_close'])) {
+            // No registration close date, assume open
+            $status = 'open';
+            $statusClass = 'open';
+            $statusText = '참가 모집 중';
+        }
+        
+        return [
+            'status' => $status,
+            'class' => $statusClass,
+            'text' => $statusText
+        ];
+    }
+    
+    /**
+     * Format game mode for display
+     * 
+     * @param string|null $gameMode Game mode code from database
+     * @return string Formatted game mode name
+     */
+    public function formatGameMode(?string $gameMode): string
+    {
+        $modes = [
+            'STD' => 'osu! Standard',
+            'TAIKO' => 'osu! Taiko', 
+            'CATCH' => 'osu! Catch',
+            'MANIA4' => 'osu! Mania 4K',
+            'MANIA7' => 'osu! Mania 7K',
+            'MANIA0' => 'osu! Mania',
+            'ETC' => 'Mixed Mode'
+        ];
+        
+        return $modes[$gameMode] ?? 'osu! Standard';
+    }
+    
+    /**
+     * Format rank range for display
+     * 
+     * @param array $tournament Tournament data
+     * @return string Formatted rank range
+     */
+    public function formatRankRange(array $tournament): string
+    {
+        if (!empty($tournament['rank_range'])) {
+            return $tournament['rank_range'];
+        }
+        
+        if (!empty($tournament['rank_range_min']) && !empty($tournament['rank_range_max'])) {
+            return '#' . number_format($tournament['rank_range_min']) . ' - #' . number_format($tournament['rank_range_max']);
+        }
+        
+        if (!empty($tournament['rank_range_min'])) {
+            return '#' . number_format($tournament['rank_range_min']) . '+';
+        }
+        
+        return 'Open Rank';
+    }
+    
+    /**
+     * Format team information for display
+     * 
+     * @param array $tournament Tournament data
+     * @return string Formatted team info
+     */
+    public function formatTeamInfo(array $tournament): string
+    {
+        $teamSize = $tournament['team_size'] ?? null;
+        $teamVs = $tournament['team_vs'] ?? null;
+        
+        if ($teamVs && $teamVs > 0) {
+            return $teamVs . 'v' . $teamVs;
+        }
+        
+        if ($teamSize && $teamSize > 1) {
+            return $teamSize . '인 팀';
+        }
+        
+        return '1v1';
     }
 }

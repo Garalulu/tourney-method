@@ -11,7 +11,7 @@ A vanilla PHP + jQuery + SQLite application optimized for Korean market deployme
 - **Backend**: Vanilla PHP 8.1+ (no frameworks)
 - **Frontend**: jQuery + Pico.css
 - **Database**: SQLite (with PostgreSQL evolution path)
-- **Deployment**: DigitalOcean App Platform (Singapore region)
+- **Deployment**: DigitalOcean App Platform (Singapore region)w
 
 ## Quick Start
 

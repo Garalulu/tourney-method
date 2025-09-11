@@ -1,16 +1,44 @@
 # Components
 
-## TournamentParser
-**Responsibility:** Parse osu! forum posts to extract structured tournament data with cross-language support
+## ForumPostParserService (Enhanced v1.3)
+**Responsibility:** Comprehensive parsing of osu! forum posts to extract structured tournament data with confidence scoring and multi-language support
 
 **Key Interfaces:**
-- parseForumPost(topic_id): ParsedTournament
-- extractTerms(post_content, language): TermExtractionResult
-- mapForeignTerms(terms, language): MappedTerms
+- parseForumPost(content, title, topicUserId): ExtractedData
+- parseTopicTitleMetadata(topicTitle): TitleMetadata
+- extractDiscordLink(content): ?string
+- extractStarRating(content): StarRatingData
+- extractRegistrationDates(content): RegistrationDates
+- extractEndDate(content): ?string
+- extractBannerUrl(content): ?string
 
-**Dependencies:** osu! Forum API, TermMappingService, SystemLog
+**Core Parsing Features:**
+- **Title Metadata Extraction**: Team formats (1v1, 2v2), game modes, rank ranges, BWS indicators
+- **Star Rating Parsing**: Comprehensive bracket parsing for min/max/qualifier ratings
+- **Date Extraction**: Registration dates, tournament end dates with format normalization
+- **Discord Integration**: Invite code extraction from BBCode and imagemaps  
+- **Banner Detection**: First image URL extraction for tournament banners
+- **Host Resolution**: osu! API integration for username resolution from topic creator
+- **Confidence Scoring**: Quality assessment for all extracted fields
 
-**Technology Stack:** Vanilla PHP with regex parsing, HTML DOM parser, UTF-8 text processing
+**Enhanced Pattern Matching:**
+- **Rank Range Conversion**: String ranges to numeric min/max values
+- **Game Mode Normalization**: Standardized mode codes (STD, TAIKO, CATCH, MANIA4, etc.)
+- **Team Size Detection**: Team size extraction with range handling (TS2-3 → 3)
+- **BWS Detection**: Badge Weighted Seeding tournament identification
+- **Korean Language Support**: Bilingual term matching for international tournaments
+
+**Dependencies:** 
+- osu! API v2 (OAuth client credentials)
+- SecurityHelper (input validation)
+- Pattern matching libraries
+- SystemLog for error tracking
+
+**Technology Stack:** 
+- PHP 8+ with advanced regex patterns
+- cURL for osu! API integration
+- JSON parsing for confidence data
+- UTF-8 text processing for international content
 
 ## AdminDashboard
 **Responsibility:** Provide admin interface for tournament review, approval, and term mapping management

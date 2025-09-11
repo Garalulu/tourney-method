@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 
                 // Change to project root directory and run parser
                 if (PHP_OS_FAMILY === 'Windows') {
-                    $command = "cd \"{$projectRoot}\" && php \"{$parserScript}\" > \"{$logFile}\" 2>&1";
+                    $command = "start /B cmd /C \"cd /D \"{$projectRoot}\" && php \"{$parserScript}\" > \"{$logFile}\" 2>&1\"";
                 } else {
                     $command = "cd '{$projectRoot}' && php '{$parserScript}' > '{$logFile}' 2>&1 &";
                 }
