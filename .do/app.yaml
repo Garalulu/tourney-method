@@ -9,8 +9,8 @@ services:
       branch: main
       deploy_on_push: true
     
-    build_command: composer install --no-dev --optimize-autoloader
-    run_command: php scripts/setup/app_platform_deploy.php && php -S 0.0.0.0:$PORT -t public/ public/router.php
+    build_command: composer install --no-dev --optimize-autoloader && php scripts/setup/app_platform_deploy.php
+    run_command: apache2-foreground
     environment_slug: php
     instance_count: 1
     instance_size_slug: basic-xxs  # $5/month tier
