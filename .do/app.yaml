@@ -11,7 +11,6 @@ services:
       deploy_on_push: true
     
     build_command: composer install --no-dev --optimize-autoloader && php scripts/setup/app_platform_deploy.php
-    run_command: apache2-foreground
     
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
