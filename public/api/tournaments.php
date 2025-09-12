@@ -12,9 +12,17 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 
-// CORS headers for local development
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+// CORS headers - restrict in production
+if (defined('ENVIRONMENT') && ENVIRONMENT === 'development') {
+    header('Access-Control-Allow-Origin: *');
+} else {
+    // In production, be more restrictive
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (in_array($origin, ['https://yourdomain.com'])) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+    }
+}
+header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 // Handle preflight requests
@@ -36,15 +44,11 @@ require_once __DIR__ . '/../../config/database.php';
 
 use TourneyMethod\Models\Tournament;
 use TourneyMethod\Utils\SecurityHelper;
+use TourneyMethod\Utils\DatabaseHelper;
 
 try {
-    
-    // Initialize database
-    initializeDatabase();
-    setDatabasePermissions();
-    
-    $pdo = new PDO("sqlite:" . __DIR__ . "/../../data/tournament_method.db");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Initialize database connection
+    $pdo = DatabaseHelper::getSecureConnection();
     $tournamentModel = new Tournament($pdo);
     
     // Parse and validate query parameters
@@ -160,14 +164,25 @@ try {
     echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     
 } catch (Exception $e) {
-    error_log("Tournament API error: " . $e->getMessage());
+    // Enhanced error logging for API
+    error_log("Tournament API error [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     http_response_code(500);
     
-    echo json_encode([
+    $errorResponse = [
         'success' => false,
         'error' => '토너먼트 데이터를 불러오는 중 오류가 발생했습니다.',
-        'message' => $e->getMessage(),
         'timestamp' => date('c')
-    ], JSON_UNESCAPED_UNICODE);
+    ];
+    
+    // Only include detailed error message in development
+    if (defined('ENVIRONMENT') && ENVIRONMENT === 'development') {
+        $errorResponse['debug'] = [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ];
+    }
+    
+    echo json_encode($errorResponse, JSON_UNESCAPED_UNICODE);
 }
 ?>

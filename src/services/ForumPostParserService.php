@@ -32,6 +32,19 @@ class ForumPostParserService
         'format' => ['형식', '포맷', 'Format', '방식']
     ];
     
+    /** Maximum input content length for security */
+    private const MAX_INPUT_LENGTH = 100000;
+    
+    /** Date validation range */
+    private const MIN_YEAR = 2020;
+    private const MAX_YEAR = 2030;
+    
+    /** String length limits */
+    private const MAX_TITLE_LENGTH = 200;
+    private const MIN_TITLE_LENGTH = 3;
+    private const MAX_USERNAME_LENGTH = 50;
+    private const MIN_USERNAME_LENGTH = 2;
+    
     /** Compiled regex patterns for performance (PERF-001 mitigation) */
     private array $compiledPatterns = [];
     
@@ -923,7 +936,8 @@ class ForumPostParserService
                 }
                 
                 // Validate date components
-                if ($month && $day && $year && checkdate($month, $day, $year) && $year >= 2020 && $year <= 2030) {
+                if ($month && $day && $year && checkdate($month, $day, $year) && 
+                    $year >= self::MIN_YEAR && $year <= self::MAX_YEAR) {
                     return sprintf('%04d-%02d-%02d %02d:%02d:00', $year, $month, $day, $hour, $minute);
                 }
             }
@@ -1091,7 +1105,7 @@ class ForumPostParserService
      */
     private function validateAndSanitizeInput(string $input): string
     {
-        if (strlen($input) > 100000) {
+        if (strlen($input) > self::MAX_INPUT_LENGTH) {
             throw new InvalidArgumentException('Input content exceeds maximum allowed length');
         }
         
@@ -1114,7 +1128,8 @@ class ForumPostParserService
     private function isValidTournamentTitle(string $title): bool
     {
         $title = trim($title);
-        return strlen($title) >= 3 && strlen($title) <= 200 && 
+        return strlen($title) >= self::MIN_TITLE_LENGTH && 
+               strlen($title) <= self::MAX_TITLE_LENGTH && 
                !preg_match('/^(Re:|Subject:|제목:)/i', $title);
     }
     
@@ -1153,7 +1168,8 @@ class ForumPostParserService
     private function isValidHostName(string $hostName): bool
     {
         $hostName = trim($hostName);
-        return strlen($hostName) >= 2 && strlen($hostName) <= 50 &&
+        return strlen($hostName) >= self::MIN_USERNAME_LENGTH && 
+               strlen($hostName) <= self::MAX_USERNAME_LENGTH &&
                !preg_match('/^(https?:|www\.|\.com)/i', $hostName);
     }
     

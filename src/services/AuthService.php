@@ -99,11 +99,11 @@ class AuthService
         curl_close($ch);
         
         if ($curlError) {
-            throw new \RuntimeException('OAuth token request failed: ' . $curlError);
+            throw new \RuntimeException('OAuth token request failed due to network error: ' . $curlError);
         }
         
         if ($httpCode !== 200) {
-            throw new \RuntimeException('OAuth token request failed with HTTP ' . $httpCode);
+            throw new \RuntimeException("OAuth token request failed with HTTP {$httpCode}. Please check API credentials and try again.");
         }
         
         $tokenResponse = json_decode($response, true);
@@ -146,11 +146,11 @@ class AuthService
         $accessToken = null;
         
         if ($curlError) {
-            throw new \RuntimeException('User info request failed: ' . $curlError);
+            throw new \RuntimeException('User info request failed due to network error: ' . $curlError);
         }
         
         if ($httpCode !== 200) {
-            throw new \RuntimeException('User info request failed with HTTP ' . $httpCode);
+            throw new \RuntimeException("User info request failed with HTTP {$httpCode}. Access token may have expired.");
         }
         
         $userInfo = json_decode($response, true);

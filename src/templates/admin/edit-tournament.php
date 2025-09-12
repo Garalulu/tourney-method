@@ -326,6 +326,5 @@ document.addEventListener('DOMContentLoaded', function() {
         // Could implement auto-save to localStorage here if needed
     });
     
-    console.log('Tournament edit form loaded for ID: <?= (int)$tournament['id'] ?>');
 });
 </script>

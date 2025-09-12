@@ -23,6 +23,13 @@ class Tournament
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_ARCHIVED = 'archived';
+    public const STATUS_CANCELLED = 'cancelled';
+    
+    /** Maximum title length for database storage */
+    private const MAX_TITLE_LENGTH = 500;
+    
+    /** Maximum content length for database storage */
+    private const MAX_CONTENT_LENGTH = 50000;
     
     public function __construct(PDO $db)
     {
@@ -309,9 +316,9 @@ class Tournament
         // Remove excessive whitespace
         $title = preg_replace('/\s+/', ' ', $title);
         
-        // Limit length (database constraint is 500 chars)
-        if (strlen($title) > 500) {
-            $title = substr($title, 0, 497) . '...';
+        // Limit length (database constraint)
+        if (strlen($title) > self::MAX_TITLE_LENGTH) {
+            $title = substr($title, 0, self::MAX_TITLE_LENGTH - 3) . '...';
         }
         
         return $title;
@@ -331,9 +338,9 @@ class Tournament
         // Remove excessive newlines (more than 3 consecutive)
         $content = preg_replace('/\n{4,}/', "\n\n\n", $content);
         
-        // Limit content length to prevent database issues (reasonable limit)
-        if (strlen($content) > 50000) {
-            $content = substr($content, 0, 49997) . '...';
+        // Limit content length to prevent database issues
+        if (strlen($content) > self::MAX_CONTENT_LENGTH) {
+            $content = substr($content, 0, self::MAX_CONTENT_LENGTH - 3) . '...';
         }
         
         return $content;
@@ -664,7 +671,7 @@ class Tournament
      * @param array $data Tournament data to update
      * @return bool Success status
      */
-    public function update($id, $data) {
+    public function update(int $id, array $data): bool {
         try {
             // Build dynamic SQL based on provided data
             $setParts = [];
@@ -717,10 +724,10 @@ class Tournament
     /**
      * Approve tournament by changing status to approved
      * @param int $id Tournament ID
-     * @param int $approvedBy Admin user ID who approved
+     * @param int|null $approvedBy Admin user ID who approved
      * @return bool Success status
      */
-    public function approve($id, $approvedBy = null) {
+    public function approve(int $id, ?int $approvedBy = null): bool {
         try {
             $sql = "UPDATE tournaments SET 
                     status = 'approved', 
@@ -815,7 +822,7 @@ class Tournament
             self::STATUS_APPROVED, 
             self::STATUS_REJECTED,
             self::STATUS_ARCHIVED,
-            'cancelled'
+            self::STATUS_CANCELLED
         ];
         
         if (!in_array($status, $validStatuses)) {

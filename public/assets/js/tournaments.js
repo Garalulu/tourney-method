@@ -17,6 +17,8 @@
         currentLimit: 10,
         currentOffset: 0,
         isLoading: false,
+        cachedTournaments: null,
+        scrollPosition: 0,
         
         // Initialize the tournament interface
         init: function() {
@@ -24,7 +26,6 @@
             this.bindModalEvents();
             this.bindPaginationEvents();
             this.setupProgressiveEnhancement();
-            console.log('Tournament Manager initialized');
         },
         
         // Bind filter interaction events
@@ -175,7 +176,7 @@
             this.updateFilterDisplay();
         },
         
-        // Load tournaments via AJAX
+        // Load tournaments via AJAX with improved error handling
         loadTournaments: function(append = false) {
             if (this.isLoading) return;
             
@@ -194,26 +195,60 @@
                 }
             });
             
-            $.get('/api/tournaments.php?' + params.toString())
-                .done((response) => {
-                    if (response.success) {
-                        if (append) {
-                            this.appendTournaments(response.tournaments);
+            const self = this;
+            $.ajax({
+                url: '/api/tournaments.php?' + params.toString(),
+                method: 'GET',
+                timeout: 10000, // 10 second timeout
+                dataType: 'json'
+            })
+                .done(function(response) {
+                    if (response && response.success) {
+                        // Cache tournament data for modal use
+                        if (response.tournaments && Array.isArray(response.tournaments)) {
+                            self.cacheTournamentList(response.tournaments);
+                            
+                            if (append) {
+                                self.appendTournaments(response.tournaments);
+                            } else {
+                                self.replaceTournaments(response.tournaments);
+                            }
+                            self.updatePaginationButtons(response.pagination);
                         } else {
-                            this.replaceTournaments(response.tournaments);
+                            self.showError('응답 형식이 올바르지 않습니다.');
                         }
-                        this.updatePaginationButtons(response.pagination);
                     } else {
-                        this.showError(response.error || '토너먼트를 불러오는 중 오류가 발생했습니다.');
+                        const errorMsg = (response && response.error) || '토너먼트를 불러오는 중 오류가 발생했습니다.';
+                        self.showError(errorMsg);
                     }
                 })
-                .fail(() => {
-                    this.showError('서버 연결 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                .fail(function(xhr, textStatus, errorThrown) {
+                    let errorMessage;
+                    if (textStatus === 'timeout') {
+                        errorMessage = '요청 시간이 초과되었습니다. 다시 시도해주세요.';
+                    } else if (xhr.status === 0) {
+                        errorMessage = '네트워크 연결을 확인해주세요.';
+                    } else if (xhr.status >= 500) {
+                        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+                    } else {
+                        errorMessage = '서버 연결 오류가 발생했습니다.';
+                    }
+                    self.showError(errorMessage);
                 })
-                .always(() => {
-                    this.isLoading = false;
-                    this.hideLoadingState();
+                .always(function() {
+                    self.isLoading = false;
+                    self.hideLoadingState();
                 });
+        },
+        
+        // Cache tournament list for modal access
+        cacheTournamentList: function(tournaments) {
+            if (!this.cachedTournaments) {
+                this.cachedTournaments = {};
+            }
+            tournaments.forEach(function(tournament) {
+                this.cachedTournaments[tournament.id] = tournament;
+            }, this);
         },
         
         // Replace tournament list with new data
@@ -286,23 +321,25 @@
             this.loadTournaments();
         },
         
-        // Open tournament detail modal
+        // Open tournament detail modal with improved data handling
         openTournamentModal: function(tournamentId) {
-            // Find tournament data from current page
-            const tournamentData = this.findTournamentById(tournamentId);
-            if (!tournamentData) {
-                console.error('Tournament not found:', tournamentId);
-                return;
-            }
-            
-            this.populateModal(tournamentData);
-            
             // Preserve scroll position
             this.scrollPosition = window.pageYOffset;
             
-            // Open modal
-            $('.tournament-modal').addClass('modal-open');
-            $('body').addClass('modal-open');
+            // Find tournament data from current page
+            const tournamentData = this.findTournamentById(tournamentId);
+            if (tournamentData) {
+                this.populateModal(tournamentData);
+                $('.tournament-modal').addClass('modal-open');
+                $('body').addClass('modal-open');
+            } else {
+                // Show loading state in modal while fetching
+                $('.modal-content').html('<div class="modal-loading">토너먼트 정보를 불러오는 중...</div>');
+                $('.tournament-modal').addClass('modal-open');
+                $('body').addClass('modal-open');
+                
+                // Data will be loaded asynchronously by findTournamentById
+            }
         },
         
         // Close tournament modal
@@ -350,21 +387,54 @@
         
         // Find tournament by ID in current data
         findTournamentById: function(id) {
-            // This would need to store tournament data or make API call
-            // For now, return placeholder
-            return {
-                id: id,
-                title: 'Tournament Title',
-                host: 'Host Name',
-                mode: 'osu! Standard',
-                rank_range: '#1,000 - #5,000',
-                registration_status: '참가 모집 중',
-                status_class: 'open',
-                banner_url: null,
-                forum_url: 'https://osu.ppy.sh/community/forums/topics/' + id,
-                google_form_id: null,
-                discord_link: null
-            };
+            // Search in currently loaded tournament data
+            const tournamentCards = $('.tournament-card[data-tournament-id="' + id + '"]');
+            if (tournamentCards.length === 0) {
+                return null;
+            }
+            
+            // Extract data from DOM or use cached tournament data if available
+            if (this.cachedTournaments && this.cachedTournaments[id]) {
+                return this.cachedTournaments[id];
+            }
+            
+            // If no cached data, make API call to get tournament details
+            this.fetchTournamentDetails(id);
+            return null; // Will populate modal asynchronously
+        },
+        
+        // Fetch detailed tournament data via API
+        fetchTournamentDetails: function(id) {
+            const self = this;
+            $.get('/api/tournaments.php?id=' + encodeURIComponent(id))
+                .done(function(response) {
+                    if (response.success && response.tournament) {
+                        self.cacheAndShowTournament(response.tournament);
+                    } else {
+                        self.showModalError('토너먼트 정보를 불러올 수 없습니다.');
+                    }
+                })
+                .fail(function() {
+                    self.showModalError('서버 연결 오류가 발생했습니다.');
+                });
+        },
+        
+        // Cache tournament data and show modal
+        cacheAndShowTournament: function(tournament) {
+            if (!this.cachedTournaments) {
+                this.cachedTournaments = {};
+            }
+            this.cachedTournaments[tournament.id] = tournament;
+            this.populateModal(tournament);
+            $('.tournament-modal').addClass('modal-open');
+            $('body').addClass('modal-open');
+        },
+        
+        // Show error in modal
+        showModalError: function(message) {
+            $('.modal-content').html('<div class="modal-error"><p>' + message + '</p></div>');
+            $('.tournament-modal').addClass('modal-open');
+            $('body').addClass('modal-open');
         },
         
         // Update filter display

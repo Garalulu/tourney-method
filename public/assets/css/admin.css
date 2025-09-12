@@ -333,3 +333,297 @@
   .hide-on-small { display: none; }
   .show-on-small { display: block; }
 }
+
+/* ===== DASHBOARD SPECIFIC STYLES ===== */
+/* Gaming-themed dashboard header */
+.dashboard-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl, 2rem);
+  padding: var(--spacing-lg, 1.5rem);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  border-radius: 8px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(0, 255, 255, 0.1) 50%, transparent 70%);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 10px #00ffff;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-size: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* Dashboard stats grid enhancement */
+.stats-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 576px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 992px) {
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Enhanced stat cards */
+.stat-card {
+  background: var(--card-background-color);
+  border: 1px solid var(--muted-border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+  border-color: var(--primary);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.stat-title {
+  font-size: 0.875rem;
+  color: var(--muted-color);
+  margin: 0 0 0.25rem 0;
+  font-weight: 500;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0.25rem 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: var(--muted-color);
+  margin: 0;
+}
+
+/* Actions grid */
+.actions-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 576px) {
+  .actions-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .actions-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.action-card {
+  background: var(--card-background-color);
+  border: 1px solid var(--muted-border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-decoration: none;
+  color: var(--color);
+  transition: all 0.3s ease;
+  display: block;
+  text-align: center;
+}
+
+.action-card:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  text-decoration: none;
+}
+
+.action-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.action-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.action-description {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Review table improvements */
+.review-table .tournament-title {
+  font-weight: 500;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .review-table .tournament-title {
+    max-width: 200px;
+  }
+}
+
+.btn-edit {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s ease;
+}
+
+.btn-edit:hover {
+  background: #0056b3;
+  color: white;
+  text-decoration: none;
+}
+
+/* System status cards */
+.status-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .status-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.status-card {
+  background: var(--card-background-color);
+  border: 1px solid var(--muted-border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.status-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.status-list li {
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-list .status-icon {
+  font-size: 1rem;
+}
+
+/* Alert component */
+.alert {
+  background: var(--card-background-color);
+  border: 1px solid var(--muted-border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: var(--color);
+}
+
+.alert-icon {
+  margin-right: 0.25rem;
+}
+
+/* Development info collapsible */
+.dev-info {
+  margin-top: 2rem;
+  border: 1px solid var(--muted-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dev-info summary {
+  padding: 1rem;
+  background: var(--card-background-color);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.dev-info-content {
+  padding: 1rem;
+}
+
+.dev-info h4 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.dev-info h4:first-child {
+  margin-top: 0;
+}
+
+/* Performance optimizations */
+.stat-card, .action-card {
+  will-change: transform;
+}
+
+.dashboard-header::before {
+  will-change: transform;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -15,15 +15,11 @@ require_once __DIR__ . '/../config/database.php';
 
 use TourneyMethod\Models\Tournament;
 use TourneyMethod\Utils\SecurityHelper;
+use TourneyMethod\Utils\DatabaseHelper;
 
 try {
     // Initialize database with secure setup
-    initializeDatabase();
-    setDatabasePermissions();
-    
-    // Initialize Tournament model
-    $pdo = new PDO("sqlite:" . __DIR__ . "/../data/tournament_method.db");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = DatabaseHelper::getSecureConnection();
     $tournamentModel = new Tournament($pdo);
     
     // Get initial tournaments for page load (first 10)
@@ -47,7 +43,8 @@ try {
     include __DIR__ . '/../src/templates/layouts/main.php';
     
 } catch (Exception $e) {
-    error_log("Tournament listing error: " . $e->getMessage());
+    // Log the specific error for debugging
+    error_log("Tournament listing error [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     http_response_code(500);
     
     // Show error page with proper styling

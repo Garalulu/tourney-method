@@ -14,11 +14,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
 
 use TourneyMethod\Utils\SecurityHelper;
+use TourneyMethod\Utils\DatabaseHelper;
 
 try {
     // Initialize database with secure setup
-    initializeDatabase();
-    setDatabasePermissions();
+    DatabaseHelper::initializeSecureDatabase();
     
     // Page configuration for main template
     define('MAIN_TEMPLATE', true);
@@ -30,7 +30,8 @@ try {
     include __DIR__ . '/../src/templates/layouts/main.php';
     
 } catch (Exception $e) {
-    error_log("Application error: " . $e->getMessage());
+    // Enhanced error logging with context
+    error_log("Application error [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
     http_response_code(500);
     
     // Show error page with proper styling

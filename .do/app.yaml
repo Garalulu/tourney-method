@@ -5,7 +5,7 @@ services:
   - name: web
     source_dir: /
     github:
-      repo: your-username/tourney-method
+      repo: Garalulu/tourney-method
       branch: main
       deploy_on_push: true
     
@@ -14,6 +14,8 @@ services:
     instance_count: 1
     instance_size_slug: basic-xxs  # $5/month tier
     
+    # Korean Optimization Settings
+    http_port: 80
     routes:
       - path: /
     
