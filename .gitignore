@@ -13,7 +13,6 @@ data/*.db-*
 # Configuration files with sensitive data
 config/secrets.php
 config/oauth.php
-config/production.php
 config/local.php
 .env*
 !.env.example
@@ -48,7 +47,6 @@ data/backup/
 
 # Composer dependencies
 vendor/
-composer.lock
 composer.phar
 
 # IDE and editor files
