@@ -1,0 +1,60 @@
+# DigitalOcean App Platform - Apache Configuration for Tourney Method
+
+# Enable rewrite engine
+RewriteEngine On
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY" 
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Korean optimization
+    Header always set Cache-Control "public, max-age=31536000" "expr=%{REQUEST_URI} =~ m#\.(js|css|png|jpg|jpeg|gif|ico|woff|woff2)$#"
+</IfModule>
+
+# UTF-8 encoding for Korean support
+AddDefaultCharset UTF-8
+
+# Admin directory routing - redirect /admin to /admin/
+RewriteCond %{REQUEST_URI} ^/admin$
+RewriteRule ^admin$ /admin/ [R=301,L]
+
+# Admin directory access
+RewriteCond %{REQUEST_URI} ^/admin/$
+RewriteRule ^admin/$ /admin/index.php [L]
+
+# API routing - allow direct access to API files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ /api/$1 [L]
+
+# Static files - serve directly
+RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2)$
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule . - [L]
+
+# Health check - serve directly
+RewriteCond %{REQUEST_URI} ^/health\.php$
+RewriteRule . - [L]
+
+# Main application routing - everything else goes to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /index.php [QSA,L]
+
+# Security - deny access to sensitive files and directories
+<FilesMatch "\.(ini|log|conf|sql|db|sqlite)$">
+    Require all denied
+</FilesMatch>
+
+<DirectoryMatch "/(vendor|src|config|data|scripts|logs|tests)/.*">
+    Require all denied
+</DirectoryMatch>
+
+# Allow access to public directory contents
+<Directory "/app/public">
+    Require all granted
+</Directory>
