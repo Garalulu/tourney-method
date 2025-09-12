@@ -80,6 +80,7 @@ desktop.ini
 .phpunit.result.cache
 tests/coverage/
 coverage/
+nul
 
 # Build and distribution
 /build/

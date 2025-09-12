@@ -1,0 +1,559 @@
+/**
+ * Tournament Discovery Interface Styles
+ * Minimal utilities extending Pico.css 2.0+ 
+ * Mobile-first responsive design
+ */
+
+/* =============================================================================
+   Tournament Container Layout
+   ============================================================================= */
+
+.tournaments-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.tournaments-layout {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+    .tournaments-layout {
+        grid-template-columns: 280px 1fr;
+    }
+}
+
+/* =============================================================================
+   Filter Panel
+   ============================================================================= */
+
+.filter-panel {
+    background: var(--background-color);
+    border: 1px solid var(--muted-border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 1rem;
+}
+
+.filter-panel h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.filter-group {
+    margin-bottom: 1.5rem;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.filter-group input,
+.filter-group select {
+    margin-bottom: 0.5rem;
+}
+
+.checkbox-group,
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.checkbox-item,
+.radio-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkbox-item input,
+.radio-item input {
+    margin: 0;
+}
+
+.clear-filters-btn {
+    width: 100%;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+/* Mobile filter panel */
+@media (max-width: 767px) {
+    .filter-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .filter-panel-open {
+        transform: translateY(0);
+    }
+    
+    .mobile-filter-toggle {
+        display: block;
+        width: 100%;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+}
+
+@media (min-width: 768px) {
+    .mobile-filter-toggle {
+        display: none;
+    }
+}
+
+/* =============================================================================
+   Tournament Grid/List
+   ============================================================================= */
+
+.tournaments-content {
+    min-height: 400px;
+}
+
+.tournament-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+}
+
+/* Mobile: Cards */
+@media (max-width: 767px) {
+    .tournament-grid {
+        gap: 1rem;
+    }
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .tournament-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Desktop: Table-like layout or 3 columns */
+@media (min-width: 1024px) {
+    .tournament-grid {
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+}
+
+/* =============================================================================
+   Tournament Cards
+   ============================================================================= */
+
+.tournament-card {
+    background: var(--card-background-color);
+    border: 1px solid var(--muted-border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    min-height: 44px; /* Minimum touch target */
+}
+
+.tournament-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+}
+
+.tournament-banner,
+.tournament-banner-placeholder {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.tournament-banner.lazy {
+    background: var(--muted-color);
+    opacity: 0.7;
+}
+
+.tournament-content {
+    padding: 1rem;
+}
+
+.tournament-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+.tournament-title a {
+    text-decoration: none;
+    color: var(--primary);
+}
+
+.tournament-title a:hover {
+    text-decoration: underline;
+}
+
+.tournament-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--muted-color);
+}
+
+.tournament-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.tournament-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* =============================================================================
+   Status Badges
+   ============================================================================= */
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: calc(var(--border-radius) * 0.5);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-open {
+    background: #28a745;
+    color: white;
+}
+
+.status-upcoming {
+    background: #ffc107;
+    color: #000;
+}
+
+.status-closed {
+    background: #dc3545;
+    color: white;
+}
+
+.status-inactive {
+    background: var(--muted-color);
+    color: var(--background-color);
+}
+
+/* =============================================================================
+   Modal Styles
+   ============================================================================= */
+
+.tournament-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.tournament-modal.modal-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    position: relative;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    max-width: 600px;
+    max-height: 90vh;
+    width: 90%;
+    overflow-y: auto;
+    z-index: 2001;
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--muted-border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.3rem;
+    flex: 1;
+    padding-right: 1rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-color);
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.modal-close:hover {
+    color: var(--primary);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-banner,
+.modal-banner-placeholder {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: white;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+}
+
+.modal-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--border-radius);
+}
+
+.modal-meta {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.modal-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.modal-link:hover {
+    background: var(--primary-hover);
+    color: white;
+}
+
+/* Mobile modal adjustments */
+@media (max-width: 767px) {
+    .modal-content {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+    
+    .modal-links {
+        flex-direction: column;
+    }
+    
+    .modal-link {
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+/* =============================================================================
+   Pagination Controls
+   ============================================================================= */
+
+.pagination-container {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.show-more-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    min-height: 44px;
+}
+
+/* =============================================================================
+   Loading States
+   ============================================================================= */
+
+.tournament-grid.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--muted-border-color);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* =============================================================================
+   Empty and Error States
+   ============================================================================= */
+
+.empty-state,
+.error-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted-color);
+}
+
+.empty-state h3,
+.error-state h3 {
+    color: var(--color);
+    margin-bottom: 1rem;
+}
+
+.retry-btn,
+.clear-filters-btn {
+    margin-top: 1rem;
+    min-height: 44px;
+}
+
+/* =============================================================================
+   Accessibility
+   ============================================================================= */
+
+/* Skip link */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--primary);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 3000;
+}
+
+.skip-link:focus {
+    top: 6px;
+}
+
+/* Focus indicators */
+.tournament-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* =============================================================================
+   Body Modal State
+   ============================================================================= */
+
+body.modal-open {
+    overflow: hidden;
+}
+
+/* =============================================================================
+   Filter Count Badge
+   ============================================================================= */
+
+.active-filter-count {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* =============================================================================
+   High Contrast Mode Support
+   ============================================================================= */
+
+@media (prefers-contrast: high) {
+    .tournament-card {
+        border-width: 2px;
+    }
+    
+    .status-badge {
+        border: 2px solid currentColor;
+    }
+}
