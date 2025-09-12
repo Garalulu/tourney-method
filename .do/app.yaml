@@ -10,7 +10,7 @@ services:
       deploy_on_push: true
     
     build_command: composer install --no-dev --optimize-autoloader
-    run_command: php scripts/setup/app_platform_deploy.php && php -S 0.0.0.0:$PORT -t public/
+    run_command: php scripts/setup/app_platform_deploy.php && php -S 0.0.0.0:$PORT -t public/ public/router.php
     environment_slug: php
     instance_count: 1
     instance_size_slug: basic-xxs  # $5/month tier
@@ -40,7 +40,7 @@ services:
         value: "Asia/Seoul"
       - key: APP_URL
         scope: RUN_TIME
-        value: "https://tourney-method-xxxxx.ondigitalocean.app"
+        value: "https://tourney-method-fpvf2.ondigitalocean.app"
       - key: SESSION_SECRET
         scope: RUN_TIME
         type: SECRET
