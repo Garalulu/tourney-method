@@ -1,8 +1,9 @@
 name: tourney-method
-region: sgp1  # Singapore for Korean optimization
+region: sgp1
 
 services:
-  - name: web
+  - name: tourney-method
+    environment_slug: php
     source_dir: /
     github:
       repo: Garalulu/tourney-method
@@ -11,14 +12,10 @@ services:
     
     build_command: composer install --no-dev --optimize-autoloader && php scripts/setup/app_platform_deploy.php
     run_command: apache2-foreground
-    environment_slug: php
-    instance_count: 1
-    instance_size_slug: basic-xxs  # $5/month tier
     
-    # Korean Optimization Settings
-    http_port: 80
-    routes:
-      - path: /
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 8080
     
     health_check:
       http_path: /health.php
@@ -35,15 +32,15 @@ services:
       - key: OSU_CLIENT_SECRET
         scope: RUN_TIME
         type: SECRET
+      - key: SESSION_SECRET
+        scope: RUN_TIME
+        type: SECRET
       - key: TZ
         scope: RUN_TIME
         value: "Asia/Seoul"
       - key: APP_URL
         scope: RUN_TIME
         value: "https://tourney-method-fpvf2.ondigitalocean.app"
-      - key: SESSION_SECRET
-        scope: RUN_TIME
-        type: SECRET
       - key: DB_PATH
         scope: RUN_TIME
         value: "/tmp/tournaments.db"
