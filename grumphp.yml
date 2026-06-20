@@ -1,0 +1,32 @@
+grumphp:
+    # Configure git hooks to run inside Docker on Windows
+    git_hook_variables:
+        EXEC_GRUMPHP_COMMAND: ['docker', 'compose', 'exec', '-T', 'laravel.test', 'php']
+
+    # Tasks to run on git commit
+    tasks:
+        # Check PHP syntax errors
+        phplint:
+            jobs: 10
+            triggered_by: ['php']
+            exclude: ['vendor']
+
+        # Run PHPStan static analysis
+        phpstan:
+            configuration: phpstan.neon
+            level: 6
+            triggered_by: ['php']
+            memory_limit: "-1"
+            use_grumphp_paths: true
+
+        # Run Laravel Pint code style checker
+        composer_script:
+            script: 'pint:test'
+            triggered_by: ['php']
+            working_directory: './'
+
+    # Git hook settings
+    process_timeout: 900
+    stop_on_failure: false
+    ignore_unstaged_changes: false
+    hide_circumvention_tip: false

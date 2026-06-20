@@ -1,0 +1,1715 @@
+openapi: 3.1.0
+info:
+  title: Tourney Method API
+  description: Tournament discovery and tracking platform for the osu! rhythm game community
+  version: 1.0.0
+  contact:
+    name: Tourney Method
+
+servers:
+  - url: https://api.tourneymethod.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Authentication via osu! OAuth
+  - name: Users
+    description: User profiles and settings
+  - name: Tournaments
+    description: Tournament discovery and management
+  - name: Matches
+    description: Match history and records
+  - name: Admin
+    description: Admin review and management
+  - name: Notifications
+    description: Webhook and notification settings
+
+paths:
+  # ============================================================================
+  # Authentication
+  # ============================================================================
+  /auth/login:
+    get:
+      tags: [Auth]
+      summary: Initiate osu! OAuth login
+      description: Redirects to osu! OAuth authorization page
+      operationId: initiateLogin
+      responses:
+        '302':
+          description: Redirect to osu! OAuth
+          headers:
+            Location:
+              schema:
+                type: string
+                example: https://osu.ppy.sh/oauth/authorize?...
+
+  /auth/callback:
+    get:
+      tags: [Auth]
+      summary: OAuth callback handler
+      description: Handles osu! OAuth callback and creates session
+      operationId: handleCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to dashboard or setup
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current user
+      operationId: logout
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      operationId: getCurrentUser
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # User Setup & Profile
+  # ============================================================================
+  /users/setup:
+    post:
+      tags: [Users]
+      summary: Complete first-time user setup
+      description: Sets main game mode for new users (required after first login)
+      operationId: completeSetup
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - main_mode
+              properties:
+                main_mode:
+                  $ref: '#/components/schemas/GameMode'
+      responses:
+        '200':
+          description: Setup complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      description: Public profile viewable by anyone
+      operationId: getUserProfile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/tournaments:
+    get:
+      tags: [Users]
+      summary: Get user tournament history
+      description: Tournaments played and staffed
+      operationId: getUserTournaments
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [player, staff, all]
+            default: all
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Tournament history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTournamentHistory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/matches:
+    get:
+      tags: [Users]
+      summary: Get user match records
+      description: Approved match records for user
+      operationId: getUserMatches
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Match records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMatchRecords'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/me/settings:
+    get:
+      tags: [Users]
+      summary: Get current user settings
+      operationId: getMySettings
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: User settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      tags: [Users]
+      summary: Update user settings
+      operationId: updateMySettings
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettingsUpdate'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me/sync:
+    post:
+      tags: [Users]
+      summary: Manually sync osu! data
+      description: Re-fetches rank, PP, badges from osu! API (rate limited to once per 24h)
+      operationId: syncOsuData
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Data synced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me/delete:
+    post:
+      tags: [Users]
+      summary: Request account deletion
+      description: Soft deletes account (data retained, account deactivated)
+      operationId: deleteAccount
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Account deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # Tournaments
+  # ============================================================================
+  /tournaments:
+    get:
+      tags: [Tournaments]
+      summary: List tournaments
+      description: Browse approved tournaments with filters
+      operationId: listTournaments
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, ended]
+            default: active
+        - name: mode
+          in: query
+          schema:
+            $ref: '#/components/schemas/GameMode'
+        - name: is_badge
+          in: query
+          schema:
+            type: boolean
+        - name: eligible_only
+          in: query
+          description: Filter to tournaments user is eligible for (requires auth)
+          schema:
+            type: boolean
+            default: false
+        - name: year
+          in: query
+          description: Filter ended tournaments by year
+          schema:
+            type: integer
+        - name: search
+          in: query
+          description: Full-text search in title/description
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 50
+      responses:
+        '200':
+          description: Tournament list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTournaments'
+
+  /tournaments/{tournamentId}:
+    get:
+      tags: [Tournaments]
+      summary: Get tournament details
+      description: Full tournament information
+      operationId: getTournament
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tournament details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TournamentDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tournaments/{tournamentId}/watch:
+    post:
+      tags: [Tournaments]
+      summary: Watch a tournament
+      description: Subscribe to tournament notifications
+      operationId: watchTournament
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - watch_type
+              properties:
+                watch_type:
+                  type: string
+                  enum: [interested, watching, stream]
+      responses:
+        '200':
+          description: Watch created/updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Tournaments]
+      summary: Unwatch a tournament
+      operationId: unwatchTournament
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Watch removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # Matches
+  # ============================================================================
+  /matches:
+    post:
+      tags: [Matches]
+      summary: Submit a match record
+      description: Submit MP link to add match to history
+      operationId: submitMatch
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mp_link
+              properties:
+                mp_link:
+                  type: string
+                  description: osu! multiplayer link
+                  example: https://osu.ppy.sh/community/matches/12345678
+                tournament_id:
+                  type: integer
+                  description: Optional tournament association
+      responses:
+        '201':
+          description: Match submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '400':
+          description: Invalid MP link or user not in match
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Match already submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /matches/{matchId}:
+    get:
+      tags: [Matches]
+      summary: Get match details
+      description: Full match information including games and scores
+      operationId: getMatch
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Match details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /matches/suggest-tournament:
+    get:
+      tags: [Matches]
+      summary: Suggest tournament for match
+      description: Auto-suggest tournament based on match name pattern
+      operationId: suggestTournament
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: match_name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Suggested tournaments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TournamentSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # Staff Records
+  # ============================================================================
+  /users/me/staff:
+    post:
+      tags: [Users]
+      summary: Add staff role
+      description: Submit staff role for a tournament
+      operationId: addStaffRole
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tournament_id
+                - role
+              properties:
+                tournament_id:
+                  type: integer
+                role:
+                  type: string
+                  example: "Mappooler"
+      responses:
+        '201':
+          description: Staff role submitted for review
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{userId}/stats:
+    get:
+      tags: [Users]
+      summary: Get user match statistics
+      description: Aggregated match statistics including win rate and frequent teammates/opponents
+      operationId: getUserStats
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Match statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMatchStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/me/recap/{year}:
+    post:
+      tags: [Users]
+      summary: Generate year-end recap image
+      description: Generate a 1200x630 PNG recap image for the specified year
+      operationId: generateYearRecap
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2030
+      responses:
+        '200':
+          description: Recap image generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_url:
+                    type: string
+                    description: URL to download the generated image
+                  generated_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid year or no data available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me/recap/{year}/download:
+    get:
+      tags: [Users]
+      summary: Download year-end recap image
+      description: Download the generated recap image as PNG
+      operationId: downloadYearRecap
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: PNG image file
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Recap not generated yet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # Dashboard
+  # ============================================================================
+  /dashboard:
+    get:
+      tags: [Users]
+      summary: Get dashboard data
+      description: Personalized dashboard for logged-in user
+      operationId: getDashboard
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # Notifications
+  # ============================================================================
+  /notifications/webhook/test:
+    post:
+      tags: [Notifications]
+      summary: Test Discord webhook
+      description: Sends test message to configured webhook
+      operationId: testWebhook
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Test message sent successfully
+        '400':
+          description: Webhook not configured or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # Admin Endpoints
+  # ============================================================================
+  /admin/tournaments/pending:
+    get:
+      tags: [Admin]
+      summary: List pending tournaments
+      description: Review queue for admin
+      operationId: listPendingTournaments
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Pending tournaments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPendingTournaments'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/tournaments/{tournamentId}:
+    get:
+      tags: [Admin]
+      summary: Get tournament for review
+      description: Full tournament data with original forum post
+      operationId: getTournamentForReview
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tournament review data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentReview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Admin]
+      summary: Update tournament
+      description: Edit tournament fields
+      operationId: updateTournament
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TournamentUpdate'
+      responses:
+        '200':
+          description: Tournament updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/tournaments/{tournamentId}/approve:
+    post:
+      tags: [Admin]
+      summary: Approve tournament
+      operationId: approveTournament
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tournament approved
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/tournaments/{tournamentId}/reject:
+    post:
+      tags: [Admin]
+      summary: Reject tournament
+      operationId: rejectTournament
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Tournament rejected
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/matches/pending:
+    get:
+      tags: [Admin]
+      summary: List pending match submissions
+      operationId: listPendingMatches
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Pending matches
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPendingMatches'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/matches/{matchId}/approve:
+    post:
+      tags: [Admin]
+      summary: Approve match submission
+      operationId: approveMatch
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Match approved
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/matches/{matchId}/reject:
+    post:
+      tags: [Admin]
+      summary: Reject match submission
+      operationId: rejectMatch
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Match rejected
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List users (Master only)
+      operationId: listUsers
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [player, admin, master]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/users/{userId}/role:
+    patch:
+      tags: [Admin]
+      summary: Update user role (Master only)
+      operationId: updateUserRole
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum: [player, admin]
+      responses:
+        '200':
+          description: Role updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/audit-log:
+    get:
+      tags: [Admin]
+      summary: View audit log
+      operationId: getAuditLog
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: admin_id
+          in: query
+          schema:
+            type: integer
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  schemas:
+    GameMode:
+      type: string
+      enum: [osu, taiko, catch, mania]
+
+    UserRole:
+      type: string
+      enum: [player, admin, master]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        osu_id:
+          type: integer
+        username:
+          type: string
+        avatar_url:
+          type: string
+        country_code:
+          type: string
+        main_mode:
+          $ref: '#/components/schemas/GameMode'
+        role:
+          $ref: '#/components/schemas/UserRole'
+        setup_complete:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            ranks:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  global_rank:
+                    type: integer
+                  country_rank:
+                    type: integer
+                  pp:
+                    type: number
+            badges:
+              type: array
+              items:
+                $ref: '#/components/schemas/Badge'
+            tournament_count:
+              type: integer
+            match_count:
+              type: integer
+            member_since:
+              type: string
+              format: date-time
+
+    Badge:
+      type: object
+      properties:
+        name:
+          type: string
+        image_url:
+          type: string
+        awarded_at:
+          type: string
+          format: date-time
+        is_bws_eligible:
+          type: boolean
+
+    UserSettings:
+      type: object
+      properties:
+        main_mode:
+          $ref: '#/components/schemas/GameMode'
+        discord_webhook_url:
+          type: string
+          nullable: true
+        discord_webhook_valid:
+          type: boolean
+        notify_registration:
+          type: boolean
+        notify_stream:
+          type: boolean
+
+    UserSettingsUpdate:
+      type: object
+      properties:
+        main_mode:
+          $ref: '#/components/schemas/GameMode'
+        discord_webhook_url:
+          type: string
+          nullable: true
+        notify_registration:
+          type: boolean
+        notify_stream:
+          type: boolean
+
+    TournamentSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        modes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameMode'
+        is_badge:
+          type: boolean
+        rank_range_min:
+          type: integer
+          nullable: true
+        rank_range_max:
+          type: integer
+          nullable: true
+        registration_end:
+          type: string
+          format: date-time
+          nullable: true
+        tournament_start:
+          type: string
+          format: date-time
+          nullable: true
+        banner_url:
+          type: string
+          nullable: true
+        registration_closes_in:
+          type: string
+          nullable: true
+          description: Human-readable countdown (e.g., "3d 5h")
+
+    TournamentDetail:
+      allOf:
+        - $ref: '#/components/schemas/TournamentSummary'
+        - type: object
+          properties:
+            description:
+              type: string
+              nullable: true
+            host_username:
+              type: string
+              nullable: true
+            team_size_min:
+              type: integer
+              nullable: true
+            team_size_max:
+              type: integer
+              nullable: true
+            registration_start:
+              type: string
+              format: date-time
+              nullable: true
+            tournament_end:
+              type: string
+              format: date-time
+              nullable: true
+            is_bws:
+              type: boolean
+            bws_base_exponent:
+              type: number
+              nullable: true
+            bws_badge_power:
+              type: number
+              nullable: true
+            star_rating_min:
+              type: number
+              nullable: true
+            star_rating_max:
+              type: number
+              nullable: true
+            format:
+              type: string
+              nullable: true
+            discord_url:
+              type: string
+              nullable: true
+            twitch_url:
+              type: string
+              nullable: true
+            spreadsheet_url:
+              type: string
+              nullable: true
+            bracket_url:
+              type: string
+              nullable: true
+            registration_url:
+              type: string
+              nullable: true
+              description: Google Forms or other registration link
+            forum_post_url:
+              type: string
+              nullable: true
+            user_watch_status:
+              type: string
+              nullable: true
+              enum: [interested, watching, stream]
+            user_is_eligible:
+              type: boolean
+              nullable: true
+
+    TournamentUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        modes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameMode'
+        team_size_min:
+          type: integer
+        team_size_max:
+          type: integer
+        registration_start:
+          type: string
+          format: date-time
+        registration_end:
+          type: string
+          format: date-time
+        tournament_start:
+          type: string
+          format: date-time
+        tournament_end:
+          type: string
+          format: date-time
+        rank_range_min:
+          type: integer
+        rank_range_max:
+          type: integer
+        is_badge:
+          type: boolean
+        is_bws:
+          type: boolean
+        bws_base_exponent:
+          type: number
+        bws_badge_power:
+          type: number
+        star_rating_min:
+          type: number
+        star_rating_max:
+          type: number
+        format:
+          type: string
+        banner_url:
+          type: string
+        discord_url:
+          type: string
+        twitch_url:
+          type: string
+        spreadsheet_url:
+          type: string
+        bracket_url:
+          type: string
+        registration_url:
+          type: string
+
+    TournamentReview:
+      allOf:
+        - $ref: '#/components/schemas/TournamentDetail'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [pending_review, approved, rejected, draft]
+            forum_post_content:
+              type: string
+              description: Original forum post HTML
+            parsed_at:
+              type: string
+              format: date-time
+            rejection_reason:
+              type: string
+              nullable: true
+
+    Match:
+      type: object
+      properties:
+        id:
+          type: integer
+        osu_match_id:
+          type: integer
+        name:
+          type: string
+        tournament:
+          $ref: '#/components/schemas/TournamentSummary'
+          nullable: true
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+
+    MatchDetail:
+      allOf:
+        - $ref: '#/components/schemas/Match'
+        - type: object
+          properties:
+            games:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatchGame'
+            user_stats:
+              $ref: '#/components/schemas/MatchUserStats'
+
+    MatchGame:
+      type: object
+      properties:
+        id:
+          type: integer
+        beatmap_title:
+          type: string
+        beatmap_version:
+          type: string
+        mods:
+          type: array
+          items:
+            type: string
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchScore'
+
+    MatchScore:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          nullable: true
+        username:
+          type: string
+        team:
+          type: string
+          nullable: true
+        score:
+          type: integer
+        accuracy:
+          type: number
+        max_combo:
+          type: integer
+        passed:
+          type: boolean
+
+    MatchUserStats:
+      type: object
+      properties:
+        games_played:
+          type: integer
+        games_won:
+          type: integer
+        total_score:
+          type: integer
+        avg_accuracy:
+          type: number
+
+    UserMatchStats:
+      type: object
+      properties:
+        total_matches:
+          type: integer
+        games_played:
+          type: integer
+        games_won:
+          type: integer
+        win_rate:
+          type: number
+          description: Win rate as decimal (0.0 - 1.0)
+        frequent_teammates:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: integer
+              username:
+                type: string
+              match_count:
+                type: integer
+        frequent_opponents:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: integer
+              username:
+                type: string
+              match_count:
+                type: integer
+
+    Dashboard:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        rank_milestones:
+          type: object
+          properties:
+            pp_at_100:
+              type: number
+            pp_at_1000:
+              type: number
+            pp_at_10000:
+              type: number
+        badge_tournament_count_year:
+          type: integer
+        currently_running:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentSummary'
+        registration_open:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentSummary'
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        admin:
+          type: object
+          properties:
+            id:
+              type: integer
+            username:
+              type: string
+        action:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: integer
+        details:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    # Laravel API Resource pagination - top-level links object
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to first page
+        last:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to last page
+        prev:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to previous page (null on first page)
+        next:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to next page (null on last page)
+
+    # Laravel API Resource pagination - meta.links array item
+    PaginationMetaLink:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          nullable: true
+        label:
+          type: string
+          description: Page number or navigation label (e.g., "&laquo; Previous")
+        active:
+          type: boolean
+          description: Whether this is the current page
+
+    # Laravel API Resource pagination - meta object
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        from:
+          type: integer
+          nullable: true
+          description: First item number on current page (null if empty)
+        last_page:
+          type: integer
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaginationMetaLink'
+          description: Array of page links for navigation UI
+        path:
+          type: string
+          format: uri
+          description: Base path for pagination URLs
+        per_page:
+          type: integer
+        to:
+          type: integer
+          nullable: true
+          description: Last item number on current page (null if empty)
+        total:
+          type: integer
+
+    PaginatedTournaments:
+      type: object
+      description: Laravel API Resource paginated response
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentSummary'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedTournamentHistory:
+      type: object
+      description: Laravel API Resource paginated response
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              tournament:
+                $ref: '#/components/schemas/TournamentSummary'
+              type:
+                type: string
+                enum: [player, staff]
+              placement:
+                type: string
+                nullable: true
+              role:
+                type: string
+                nullable: true
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedMatchRecords:
+      type: object
+      description: Laravel API Resource paginated response
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Match'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedPendingTournaments:
+      type: object
+      description: Laravel API Resource paginated response
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              detected_modes:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameMode'
+              host_username:
+                type: string
+              parsed_at:
+                type: string
+                format: date-time
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedPendingMatches:
+      type: object
+      description: Laravel API Resource paginated response
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              submitted_by:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  username:
+                    type: string
+              submitted_at:
+                type: string
+                format: date-time
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedUsers:
+      type: object
+      description: Laravel API Resource paginated response
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginatedAuditLog:
+      type: object
+      description: Laravel API Resource paginated response
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogEntry'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

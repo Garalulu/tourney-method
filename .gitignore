@@ -1,0 +1,41 @@
+# Dependencies and generated assets
+/vendor/
+/node_modules/
+/public/build/
+/public/hot
+/public/storage
+
+# Runtime data
+/storage/*.key
+/storage/pail/
+/bootstrap/cache/*.php
+*.log
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.railway.example
+/auth.json
+docker-compose.override.yml
+
+# Test and quality-tool output
+/.phpunit.cache/
+/.phpunit.result.cache
+/.php-cs-fixer.cache
+/coverage/
+/.reports/
+
+# Editors and operating systems
+/.fleet/
+/.idea/
+/.nova/
+/.vscode/
+/.zed/
+.DS_Store
+._*
+Thumbs.db
+*~
+*.swp
+*.swo
+*.swn
