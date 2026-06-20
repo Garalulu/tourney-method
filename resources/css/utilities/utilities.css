@@ -1,0 +1,33 @@
+@layer utilities {
+    /* Text gradients */
+    .text-gradient-pink {
+        @apply bg-gradient-to-r from-osu-pink to-pink-400 bg-clip-text text-transparent;
+    }
+
+    .text-gradient-cyan {
+        @apply bg-gradient-to-r from-osu-cyan to-blue-400 bg-clip-text text-transparent;
+    }
+
+    .text-gradient-primary {
+        @apply bg-gradient-to-r from-osu-pink to-osu-cyan bg-clip-text text-transparent;
+    }
+
+    /* Hover glow effects */
+    .glow-pink {
+        box-shadow: 0 0 20px rgba(255, 102, 170, 0.3);
+    }
+
+    .glow-cyan {
+        box-shadow: 0 0 20px rgba(0, 221, 255, 0.3);
+    }
+
+    /* Glass morphism */
+    .glass {
+        @apply bg-dark-850/80 backdrop-blur-md border border-dark-700;
+    }
+
+    /* Rhythmic spacing utilities */
+    .rhythm-gap {
+        gap: clamp(1rem, 2vw, 1.5rem);
+    }
+}

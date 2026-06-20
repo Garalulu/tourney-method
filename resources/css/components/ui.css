@@ -1,0 +1,77 @@
+@layer components {
+    .ui-panel {
+        @apply rounded-xl border border-dark-700 bg-dark-800/50 backdrop-blur-sm;
+    }
+
+    .ui-panel-muted {
+        @apply rounded-xl border border-slate-700/50 bg-slate-800/50 backdrop-blur-sm;
+    }
+
+    .ui-panel-subtle {
+        @apply rounded-xl border border-slate-700/50 bg-slate-800/30 backdrop-blur-sm;
+    }
+
+    .ui-panel-modal {
+        @apply rounded-2xl border border-dark-700 bg-dark-850 shadow-2xl;
+    }
+
+    .ui-panel-popover {
+        @apply rounded-xl border border-dark-700 bg-dark-850/95 shadow-2xl backdrop-blur-xl;
+    }
+
+    .ui-badge {
+        @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    }
+
+    .ui-badge-xs {
+        @apply rounded px-2 py-0.5 text-xs font-medium;
+    }
+
+    .ui-badge-neutral {
+        @apply bg-slate-700/50 text-slate-300;
+    }
+
+    .ui-badge-primary {
+        @apply bg-pink-500/20 text-pink-400;
+    }
+
+    .ui-badge-success {
+        @apply bg-green-500/20 text-green-400;
+    }
+
+    .ui-badge-warning {
+        @apply bg-yellow-500/20 text-yellow-400;
+    }
+
+    .ui-badge-danger {
+        @apply bg-red-500/20 text-red-400;
+    }
+
+    .ui-badge-info {
+        @apply bg-blue-500/20 text-blue-400;
+    }
+
+    .gamemode-badge {
+        @apply inline-flex items-center gap-1.5 rounded bg-slate-950/80 px-2 py-1 text-xs font-bold text-osu-pink ring-1 ring-osu-pink/30;
+    }
+
+    .gamemode-badge-pill {
+        @apply rounded-full bg-pink-500/20 px-3 py-1 font-semibold text-pink-400 ring-0;
+    }
+
+    .gamemode-badge-compact {
+        @apply rounded bg-slate-700/50 px-2 py-0.5 font-medium text-slate-300 ring-0;
+    }
+
+    .gamemode-icon {
+        @apply h-3.5 w-3.5 shrink-0 object-contain opacity-90;
+    }
+
+    .gamemode-icon-sm {
+        @apply h-4 w-4;
+    }
+
+    .gamemode-icon-md {
+        @apply h-5 w-5;
+    }
+}

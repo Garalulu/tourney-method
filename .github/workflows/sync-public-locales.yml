@@ -1,0 +1,52 @@
+name: Sync public locales
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 17 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out application
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+
+      - name: Check out public locales
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: Garalulu/tourney-method-locales
+          path: _public-locales
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
+        with:
+          php-version: '8.4'
+
+      - name: Validate and import translations
+        run: php tools/import-public-locales.php _public-locales .
+
+      - name: Remove public checkout
+        run: rm -rf _public-locales
+
+      - name: Open or refresh translation pull request
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/sync-public-locales
+          delete-branch: true
+          commit-message: 'chore: sync public translations'
+          title: 'chore: sync public translations'
+          body: |
+            Automated synchronization from `Garalulu/tourney-method-locales`.
+
+            The public locale validator passed before these files were imported.
+            Private-only locale files and excluded keys were preserved.
+          labels: translations

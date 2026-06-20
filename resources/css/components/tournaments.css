@@ -1,0 +1,281 @@
+@layer components {
+    /* Tournament page components */
+    .tournament-page {
+        @apply bg-slate-900;
+    }
+
+    .tournament-filter-section {
+        @apply border-t border-slate-800 bg-slate-900;
+    }
+
+    .tournament-filter-container {
+        @apply container py-8;
+    }
+
+    .tournament-section-title {
+        @apply text-xl font-bold text-white mb-6;
+    }
+
+    .tournament-tab-button {
+        @apply px-6 py-3 rounded-lg font-semibold transition-all;
+    }
+
+    .tournament-tab-active {
+        @apply bg-osu-pink text-white shadow-lg shadow-osu-pink/20;
+    }
+
+    .tournament-tab-inactive {
+        @apply bg-slate-800 text-gray-300 hover:bg-slate-700;
+    }
+
+    .tournament-tab-inactive-alt {
+        @apply bg-dark-800 text-gray-300 hover:bg-dark-700;
+    }
+
+    .tournament-filter-group {
+        @apply space-y-6;
+    }
+
+    .tournament-filter-label {
+        @apply block text-sm font-medium text-gray-300 mb-2;
+    }
+
+    .tournament-search-input {
+        @apply w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-lg text-gray-400 placeholder-gray-500 focus:border-osu-pink focus:ring-2 focus:ring-osu-pink/20 focus:outline-none transition-all;
+    }
+
+    .tournament-mode-section {
+        @apply py-6 border-b border-dark-700;
+    }
+
+    .tournament-mode-section-title {
+        @apply text-sm font-semibold text-gray-300 mb-4;
+    }
+
+    .tournament-mode-group {
+        @apply flex flex-wrap gap-4;
+    }
+
+    .tournament-mode-label {
+        @apply cursor-pointer;
+    }
+
+    .tournament-mode-text {
+        @apply text-gray-400 group-hover:text-white;
+    }
+
+    .tournament-mode-text-checked {
+        @apply peer-checked:text-osu-pink peer-checked:font-semibold peer-checked:underline;
+    }
+
+    .tournament-options-section {
+        @apply pt-6 border-t border-dark-700;
+    }
+
+    .tournament-options-layout {
+        @apply flex items-start justify-between gap-8;
+    }
+
+    .tournament-checkbox-group {
+        @apply flex flex-wrap gap-4;
+    }
+
+    .tournament-checkbox-label {
+        @apply cursor-pointer;
+    }
+
+    .tournament-checkbox-text {
+        @apply text-gray-400 group-hover:text-white;
+    }
+
+    .tournament-checkbox-text-checked {
+        @apply peer-checked:text-osu-pink peer-checked:font-semibold peer-checked:underline;
+    }
+
+    .tournament-year-select {
+        @apply px-4 py-2 bg-dark-800 border border-dark-700 rounded-lg text-gray-400 text-sm focus:border-osu-pink focus:ring-2 focus:ring-osu-pink/20 focus:outline-none hover:border-osu-pink/50 transition-all;
+    }
+
+    .tournament-grid-section {
+        @apply border-t border-slate-800 bg-slate-950;
+    }
+
+    .tournament-grid-container {
+        @apply container py-12;
+    }
+
+    .tournament-grid {
+        @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300;
+    }
+
+    .tournament-grid-loading {
+        @apply opacity-50 pointer-events-none;
+    }
+
+    .tournament-pagination {
+        @apply mt-12;
+    }
+
+    .tournament-empty-state {
+        @apply text-center py-16;
+    }
+
+    .tournament-empty-title {
+        @apply text-xl font-bold text-white mb-2;
+    }
+
+    .tournament-empty-description {
+        @apply text-gray-400 mb-6;
+    }
+
+    .tournament-empty-actions {
+        @apply flex items-center justify-center gap-2 text-sm flex-wrap;
+    }
+
+    .tournament-clear-link {
+        @apply text-osu-pink hover:text-osu-pink/80 transition-colors;
+    }
+
+    .tournament-separator {
+        @apply text-gray-600;
+    }
+
+    .tournament-hero-header {
+        @apply relative overflow-hidden border-b-2 border-pink-500/30;
+    }
+
+    .tournament-hero-pattern {
+        @apply absolute inset-0 opacity-10;
+    }
+
+    .tournament-hero-content {
+        @apply relative container;
+    }
+
+    /* Tournament card components */
+    .tournament-card-link {
+        @apply block h-full p-5 bg-slate-900 border-2 border-slate-700 rounded-lg hover:border-osu-pink transition-all;
+    }
+
+    .tournament-card-banner {
+        @apply relative h-32 mb-4 rounded overflow-hidden;
+    }
+
+    .tournament-card-banner-future {
+        @apply opacity-60;
+    }
+
+    .tournament-card-banner-img {
+        @apply w-full h-full object-cover;
+    }
+
+    .tournament-card-banner-blur {
+        @apply blur-sm;
+    }
+
+    .tournament-card-banner-placeholder {
+        @apply w-full h-full bg-osu-pink/20 flex items-center justify-center;
+    }
+
+    .tournament-card-banner-placeholder-text {
+        @apply text-osu-pink/50 text-lg font-bold;
+    }
+
+    .tournament-card-banner-overlay {
+        @apply absolute inset-0 bg-gradient-to-t from-black/70 to-transparent;
+    }
+
+    .tournament-card-badges {
+        @apply absolute top-2 right-2 flex gap-1;
+    }
+
+    .tournament-card-mode-badge {
+        @apply gamemode-badge;
+    }
+
+    .tournament-card-status-badges {
+        @apply absolute bottom-2 left-2 flex gap-2 flex-wrap;
+    }
+
+    .tournament-card-status-badge {
+        @apply px-2 py-1 text-xs font-bold bg-amber-600 text-white rounded;
+    }
+
+    .tournament-card-status-badge-closing {
+        @apply px-2 py-1 text-xs font-bold bg-red-600 text-white rounded animate-pulse;
+    }
+
+    .tournament-card-status-badge-open {
+        @apply px-2 py-1 text-xs font-bold bg-green-600 text-white rounded;
+    }
+
+    .tournament-card-status-badge-ongoing {
+        @apply px-2 py-1 text-xs font-bold bg-blue-600 text-white rounded;
+    }
+
+    .tournament-card-status-badge-closed {
+        @apply px-2 py-1 text-xs font-bold bg-orange-600 text-white rounded;
+    }
+
+    .tournament-card-status-badge-future {
+        @apply px-2 py-1 text-xs font-bold bg-slate-600 text-white rounded;
+    }
+
+    .tournament-detail-hero-badges {
+        @apply flex flex-wrap items-center gap-3;
+    }
+
+    .tournament-card-title {
+        @apply text-xl font-tournament font-bold text-white mb-3 truncate;
+    }
+
+    .tournament-card-metadata {
+        @apply space-y-1 text-sm;
+    }
+
+    .tournament-card-metadata-text {
+        @apply text-gray-400;
+    }
+
+    .tournament-card-team-size {
+        @apply text-osu-pink font-medium;
+    }
+
+    .tournament-card-star-rating {
+        @apply text-yellow-400 font-semibold text-base;
+    }
+
+    /* Load more button */
+    .tournament-load-more {
+        @apply mt-12 text-center;
+    }
+
+    .tournament-load-more-button {
+        @apply px-8 py-3 bg-osu-pink hover:bg-osu-pink/80 text-white font-semibold rounded-lg transition-all;
+        @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    .tournament-load-more-button:disabled {
+        @apply opacity-50 cursor-not-allowed;
+    }
+
+    .tournament-load-more-count {
+        @apply mt-3 text-sm text-gray-400;
+    }
+
+    /* Back to top button */
+    .back-to-top-button {
+        @apply fixed bottom-8 right-8 z-50;
+    }
+
+    .back-to-top-circle {
+        @apply w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-600;
+        @apply text-gray-300;
+        @apply flex items-center justify-center;
+        @apply cursor-pointer;
+    }
+
+    .back-to-top-icon {
+        @apply w-6 h-6;
+    }
+}
