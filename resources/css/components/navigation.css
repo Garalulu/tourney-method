@@ -1,0 +1,148 @@
+@layer components {
+    /* Container system */
+    .container {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    .container-wide {
+        @apply max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    .container-narrow {
+        @apply max-w-4xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    .container-edge {
+        @apply max-w-7xl mx-auto;
+    }
+
+    /* Navigation component */
+    .nav {
+        @apply bg-dark-850/95 backdrop-blur-md border-b border-dark-700 sticky top-0 z-[70] isolate;
+    }
+
+    .nav-container {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    .nav-content {
+        @apply flex justify-between items-center h-16;
+    }
+
+    .nav-logo {
+        @apply flex-shrink-0 flex items-center;
+    }
+
+    .nav-desktop {
+        @apply hidden md:flex items-center justify-between px-4 flex-1;
+    }
+
+    .nav-links {
+        @apply flex items-center gap-2;
+    }
+
+    .nav-actions {
+        @apply flex items-center gap-2;
+    }
+
+    .nav-item {
+        @apply flex items-center gap-2 px-1 py-2 rounded-lg font-medium text-sm transition-colors;
+    }
+
+    .nav-icon-btn {
+        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-dark-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-osu-pink/40;
+    }
+
+    .nav-link {
+        @apply text-gray-300 hover:text-osu-pink;
+    }
+
+    .nav-link-active {
+        @apply text-osu-pink;
+    }
+
+    .nav-user-btn {
+        @apply flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-dark-700 transition-colors;
+    }
+
+    .nav-dropdown {
+        @apply absolute right-0 mt-3 w-48 z-50;
+    }
+
+    .nav-dropdown-content {
+        @apply bg-dark-850/95 backdrop-blur-xl border border-dark-700 rounded-xl overflow-hidden;
+    }
+
+    .nav-dropdown-item {
+        @apply block px-4 py-3 text-sm text-gray-300 hover:bg-dark-700 hover:text-white transition-colors;
+    }
+
+    .nav-mobile-btn {
+        @apply p-2 rounded-lg hover:bg-dark-700 transition-colors;
+    }
+
+    .nav-mobile-menu {
+        @apply absolute inset-x-0 top-full z-[80] max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-dark-700 bg-dark-850/95 shadow-xl backdrop-blur-xl md:hidden;
+    }
+
+    .nav-mobile-content {
+        @apply px-4 py-4 space-y-1;
+    }
+
+    .nav-mobile-item {
+        @apply flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm text-gray-300 hover:text-white transition-colors;
+    }
+
+    .nav-mobile-subheader {
+        @apply flex items-center gap-2 pb-3;
+    }
+
+    .nav-mobile-user-tab {
+        @apply flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-gray-300 transition-colors hover:bg-dark-700 hover:text-white;
+    }
+
+    .nav-mobile-action-tabs {
+        @apply flex shrink-0 items-center gap-1;
+    }
+
+    .nav-mobile-icon-tab {
+        @apply flex h-10 w-10 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-dark-700 hover:text-white;
+    }
+
+    .nav-mobile-tab-active {
+        @apply bg-dark-700 text-osu-pink ring-1 ring-osu-pink/30;
+    }
+
+    .nav-mobile-search-wrap {
+        @apply relative mt-3;
+    }
+
+    .nav-mobile-search-input {
+        @apply w-full rounded-lg border border-dark-700 bg-dark-900/50 py-3 pl-10 pr-12 text-sm text-white placeholder-gray-500 transition-all focus:border-osu-pink/50 focus:outline-none focus:ring-2 focus:ring-osu-pink/20;
+    }
+
+    .nav-mobile-section-title {
+        @apply mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-gray-500;
+    }
+
+    .nav-mobile-result-row {
+        @apply flex items-center gap-3 rounded-lg border border-dark-700/50 bg-dark-900/30 p-3 transition-colors hover:border-osu-pink/50 hover:bg-dark-800/50;
+    }
+
+    .nav-mobile-notification-row {
+        @apply flex gap-3 border-b border-dark-700/70 px-3 py-3 last:border-b-0;
+    }
+
+    /* Footer components */
+    .footer-link {
+        @apply text-gray-400 font-medium transition-colors duration-200;
+    }
+
+    .footer-link:hover {
+        @apply text-osu-pink;
+    }
+
+    .footer-separator {
+        @apply w-px h-3 bg-dark-600;
+    }
+}

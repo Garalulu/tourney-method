@@ -1,0 +1,122 @@
+@layer components {
+    /* Welcome page components */
+    .hero-section {
+        @apply py-8;
+    }
+
+    .hero-title {
+        @apply font-display font-black text-5xl md:text-6xl lg:text-7xl mb-6 text-osu-pink;
+    }
+
+    .hero-subtitle {
+        @apply text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto mb-12;
+    }
+
+    .action-card {
+        @apply block p-8 bg-dark-800 rounded-lg border border-dark-700 transition-colors;
+    }
+
+    .action-card-cyan {
+        @apply action-card hover:border-osu-cyan;
+    }
+
+    .action-card-pink {
+        @apply action-card hover:border-osu-pink;
+    }
+
+    .action-card-disabled {
+        @apply p-8 bg-dark-800 rounded-lg border border-dark-700;
+    }
+
+    .action-card-title {
+        @apply font-display font-bold text-xl mb-2 text-gray-200 group-hover:text-osu-cyan transition-colors;
+    }
+
+    .action-card-title-pink {
+        @apply font-display font-bold text-xl mb-2 text-gray-200 group-hover:text-osu-pink transition-colors;
+    }
+
+    .action-card-description {
+        @apply text-gray-400;
+    }
+
+    .action-card-disabled-title {
+        @apply font-display font-bold text-xl mb-2 text-gray-500;
+    }
+
+    .action-card-disabled-description {
+        @apply text-gray-500;
+    }
+
+    .info-section {
+        @apply py-8 border-t border-dark-700;
+    }
+
+    .info-section-alt {
+        @apply py-8 bg-dark-900/30 border-t border-dark-700;
+    }
+
+    .info-section-title {
+        @apply font-display font-bold text-3xl mb-6;
+    }
+
+    .info-section-title-large {
+        @apply font-display font-bold text-3xl mb-8;
+    }
+
+    .info-section-content {
+        @apply text-gray-300 text-lg leading-relaxed;
+    }
+
+    .stats-section {
+        @apply py-16 border-t border-dark-700;
+    }
+
+    .stat-item {
+        @apply text-center;
+    }
+
+    .stat-number {
+        @apply font-display font-black text-6xl md:text-5xl text-osu-cyan mb-3;
+    }
+
+    .stat-label {
+        @apply text-gray-400 font-medium text-lg;
+    }
+
+    .data-source-list {
+        @apply space-y-4;
+    }
+
+    .data-source-item {
+        @apply flex items-center gap-4;
+    }
+
+    .data-source-dot {
+        @apply w-2 h-2 rounded-full;
+    }
+
+    .data-source-dot-pink {
+        @apply data-source-dot bg-osu-pink;
+    }
+
+    .data-source-dot-cyan {
+        @apply data-source-dot bg-osu-cyan;
+    }
+
+    .data-source-dot-purple {
+        @apply data-source-dot bg-purple-400;
+    }
+
+    .data-source-dot-green {
+        @apply data-source-dot bg-green-400;
+    }
+
+    .data-source-label {
+        @apply font-semibold text-white;
+    }
+
+    .data-source-description {
+        @apply text-gray-500 ml-2;
+    }
+}

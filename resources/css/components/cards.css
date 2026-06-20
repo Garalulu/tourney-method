@@ -1,0 +1,35 @@
+@layer components {
+    /* Card component */
+    .card {
+        @apply bg-dark-850/80 backdrop-blur-sm border border-dark-700 rounded-lg p-6 hover:border-dark-600 transition-all;
+    }
+
+    .card-hover {
+        @apply card hover:shadow-lg hover:shadow-osu-pink/10 hover:-translate-y-1;
+    }
+
+    /* Badge components */
+    .badge {
+        @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+    }
+
+    .badge-primary {
+        @apply badge bg-osu-pink/20 text-osu-pink border border-osu-pink/30;
+    }
+
+    .badge-secondary {
+        @apply badge bg-osu-cyan/20 text-osu-cyan border border-osu-cyan/30;
+    }
+
+    .badge-success {
+        @apply badge bg-green-500/20 text-green-400 border border-green-500/30;
+    }
+
+    .badge-warning {
+        @apply badge bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+    }
+
+    .badge-error {
+        @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+    }
+}

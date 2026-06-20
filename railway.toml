@@ -1,0 +1,47 @@
+# Railway Configuration for Tourney Method
+# https://railway.app/
+#
+# This file configures Railpack build settings for the App service.
+# Worker and Cron services are created separately with custom start commands.
+
+[variables]
+# PHP Configuration for Railpack
+RAILPACK_PHP_ROOT_DIR = "/app/public"
+
+# PHP Extensions required by Tourney Method
+# - pgsql: PostgreSQL database
+# - redis: Redis cache/queue
+# - bcmath: Arbitrary precision mathematics
+# - ctype: Character type checking
+# - curl: HTTP client
+# - dom: XML/HTML manipulation
+# - mbstring: Multibyte string functions
+# - openssl: Cryptography
+# - pcntl: Process control (for Horizon)
+# - zip: Zip archive support
+# - gd: Image processing (Intervention Image)
+RAILPACK_PHP_EXTENSIONS = "pgsql,redis,bcmath,ctype,curl,dom,mbstring,openssl,pcntl,zip,gd"
+
+# Server port (Railway auto-provides this)
+PORT = "8080"
+
+[build]
+# Use Railpack (Railway's modern build system)
+# Railpack auto-detects Laravel and runs:
+# - composer install
+# - npm install && npm run build
+# - artisan config:cache
+# - artisan route:cache
+# - artisan view:cache
+builder = "RAILPACK"
+
+[deploy]
+# Fix permissions before every deployment (runs before container starts).
+# Runtime dependencies such as pg_dump/psql must be installed in the image above.
+preDeployCommand = """\
+  set -e && \
+  echo "Fixing permissions..." && \
+  chown -R nobody:nogroup storage bootstrap/cache && \
+  chmod -R 775 storage bootstrap/cache && \
+  echo "Pre-deploy complete!"
+  """

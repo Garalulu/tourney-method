@@ -1,0 +1,39 @@
+@layer base {
+    /* Alpine.js x-cloak - hide elements until Alpine loads */
+    [x-cloak] {
+        display: none !important;
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar for dark theme */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-dark-900;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-dark-600 rounded-full;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-dark-500;
+    }
+
+    /* Focus styles for accessibility */
+    *:focus-visible {
+        @apply outline-none ring-2 ring-osu-pink ring-offset-2 ring-offset-dark-900;
+    }
+
+    /* Selection color */
+    ::selection {
+        @apply bg-osu-pink/30 text-white;
+    }
+}

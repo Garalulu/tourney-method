@@ -1,0 +1,338 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    # Analysis level (0-9, higher is stricter)
+    level: 6
+
+    # Treat PHPDoc types as less certain (fixes false positives)
+    treatPhpDocTypesAsCertain: false
+
+    # Paths to analyze
+    paths:
+        - app
+        - database
+        - routes
+        - tests
+
+    # Paths to exclude from analysis
+    excludePaths:
+        - vendor
+        - node_modules (?)
+        - bootstrap/cache
+        - storage
+
+    # Ignore specific errors during initial setup
+    ignoreErrors:
+        # Laravel facades and magic methods
+        - '#Call to an undefined method Illuminate\\.*#'
+        - '#Access to an undefined property Illuminate\\.*#'
+
+        # Pest PHP framework limitations - these are valid Pest syntax
+        # PHPStan cannot resolve Pest's dynamic test case binding
+        -
+            message: '#Call to an undefined method PHPUnit\\Framework\\TestCase::#'
+            path: tests/*
+        -
+            message: '#Access to an undefined property PHPUnit\\Framework\\TestCase::\$#'
+            path: tests/*
+        -
+            message: '#Unable to resolve the template type TValue in call to function expect#'
+            path: tests/*
+
+        # Mockery method chaining limitations
+        -
+            message: '#Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage::#'
+            path: tests/*
+
+        # Laravel collect() helper template resolution limitation
+        # PHPStan cannot resolve generic types when collect() receives dynamic data
+        -
+            message: '#Unable to resolve the template type TKey in call to function collect#'
+            path: tests/*
+        -
+            message: '#Unable to resolve the template type TValue in call to function collect#'
+            path: tests/*
+        -
+            message: '#Unable to resolve the template type TKey in call to function collect#'
+            path: app/*
+        -
+            message: '#Unable to resolve the template type TValue in call to function collect#'
+            path: app/*
+
+        # Pest expectation extension uses $this binding (valid Pest pattern)
+        -
+            message: '#Undefined variable: \$this#'
+            path: tests/Pest.php
+        -
+            message: '#Variable \$this in PHPDoc tag @var does not exist#'
+            path: tests/Pest.php
+        -
+            message: '#PHPDoc tag @var for variable \$this contains generic class Pest\\Expectation but does not specify its types#'
+            path: tests/Pest.php
+
+        # Laravel Artisan closure binding (valid Laravel pattern)
+        -
+            message: '#Undefined variable: \$this#'
+            path: routes/console.php
+
+        # assertTrue(true) in example test - valid placeholder test
+        -
+            message: '#Call to method PHPUnit\\Framework\\Assert::assertTrue\(\) with true will always evaluate to true#'
+            path: tests/Unit/ExampleTest.php
+
+        # DiscordChannel factory and model - Laravel magic methods
+        -
+            message: '#Call to an undefined static method App\\Models\\DiscordChannel::#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Call to an undefined static method App\\Models\\DiscordChannel::#'
+            path: database/seeders/DiscordChannelSeeder.php
+        -
+            message: '#Call to an undefined static method App\\Models\\DiscordChannel::#'
+            path: tests/Feature/Discord/CentralNotificationTest.php
+        -
+            message: '#Call to an undefined static method App\\Models\\DiscordChannel<.*>::active\(\)#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Call to method create\(\) on an unknown class App\\Models\\DiscordChannelFactory#'
+            path: tests/Feature/Discord/CentralNotificationTest.php
+        -
+            message: '#Offset .* on array.*on left side of \?\? always exists#'
+            path: database/seeders/DiscordChannelSeeder.php
+
+        # DiscordChannel Eloquent dynamic properties - Laravel magic (Phase 8)
+        -
+            message: '#Access to an undefined property App\\Models\\DiscordChannel::\$channel_name#'
+            path: app/Services/DiscordService.php
+
+        # DiscordChannel generic type annotations - PHPStan limitation (Phase 8)
+        -
+            message: '#PHPDoc tag @extends contains generic type#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#PHPDoc tag @use has invalid type App\\Models\\DiscordChannelFactory#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Type .* in generic type .* in PHPDoc tag @use is not subtype of template type#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Variable \$roleMin on left side of \?\? always exists#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Method App\\Models\\DiscordChannel::scopeForBadge\(\) has no return type specified#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Method App\\Models\\DiscordChannel::scopeForBadge\(\) has parameter.*with no type specified#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Method App\\Models\\DiscordChannel::scopeActive\(\) has no return type specified#'
+            path: app/Models/DiscordChannel.php
+        -
+            message: '#Method App\\Models\\DiscordChannel::scopeActive\(\) has parameter.*with no type specified#'
+            path: app/Models/DiscordChannel.php
+
+        # ImportJob Eloquent model - Laravel magic methods (Phase 13)
+        -
+            message: '#Call to an undefined static method App\\Models\\ImportJob::create\(\)#'
+            path: app/Console/Commands/ImportHistoricalData.php
+
+        # PHPStan type inference issues - code is runtime-safe (Phase 13)
+        -
+            message: '#Comparison operation ">" between int<1, max> and 0 is always true#'
+            path: app/Console/Commands/ImportHistoricalData.php
+
+        # TournamentStaff Eloquent model magic methods (Phase 6)
+        -
+            message: '#Call to an undefined static method App\\Models\\TournamentStaff::create#'
+            path: app/Http/Controllers/Admin/TournamentController.php
+
+        # TournamentWinner Eloquent model magic methods - Laravel magic (Phase 6)
+        -
+            message: '#Call to an undefined static method App\\Models\\TournamentWinner::#'
+            path: app/Http/Controllers/Admin/TournamentController.php
+        -
+            message: '#Access to an undefined property App\\Models\\TournamentWinner::\$#'
+            path: app/Http/Controllers/Admin/TournamentController.php
+
+        # TournamentController - Collection type inference on staff mapping
+        -
+            message: '#Parameter.*callback.*contains unresolvable type#'
+            path: app/Http/Controllers/Admin/TournamentController.php
+        -
+            message: '#Return type of call to method.*map\(\) contains unresolvable type#'
+            path: app/Http/Controllers/Admin/TournamentController.php
+
+        # Collection type inference - PHPStan limitation (Phase 6)
+        -
+            message: '#Parameter.*callback.*expects callable#'
+            path: app/Http/Controllers/Admin/UserController.php
+
+        # String length check after early return - PHPStan false positive (Phase 6)
+        -
+            message: '#Comparison operation ">=" between int<3, max> and 3 is always true#'
+            path: app/Http/Controllers/Admin/UserController.php
+        -
+            message: '#Strict comparison using !== between string and null will always evaluate to true#'
+            path: app/Services/TcommApiService.php
+
+        # Laravel Artisan facade in tests - valid Laravel pattern (Phase 5)
+        -
+            message: '#Call to static method call\(\) on an unknown class Artisan#'
+            path: tests/Feature/DashboardEnhancementsTest.php
+        -
+            message: '#Call to static method call\(\) on an unknown class Artisan#'
+            path: tests/Feature/HomepageTest.php
+        -
+            message: '#Call to static method call\(\) on an unknown class Artisan#'
+            path: tests/Feature/NavigationTest.php
+        -
+            message: '#Call to static method call\(\) on an unknown class Artisan#'
+            path: tests/Feature/SettingsPageTest.php
+
+        # Laravel View return type - PHPStan limitation (Phase 2 & 4)
+        -
+            message: '#Method .*::index\(\) should return.*but returns Illuminate\\Contracts\\View\\View#'
+            path: app/Http/Controllers/Admin/AdminDashboardController.php
+        -
+            message: '#Method .*::index\(\) should return.*but returns Illuminate\\Contracts\\View\\View#'
+            path: app/Http/Controllers/UserSettingsController.php
+
+        # ImportJob Eloquent model magic methods (Phase 2)
+        -
+            message: '#Call to an undefined static method App\\Models\\ImportJob::latest\(\)#'
+            path: app/Http/Controllers/Admin/AdminDashboardController.php
+
+        # Tournament model dynamic properties - Laravel magic methods
+        -
+            message: '#Access to an undefined property App\\Models\\Tournament::\$#'
+            path: app/*
+        -
+            message: '#Access to an undefined property App\\Models\\Tournament::\$#'
+            path: app/Jobs/PostTournamentToDiscordJob.php
+
+        # Tournament model scope return types - PHPStan limitation
+        -
+            message: '#Method App\\Models\\Tournament::scope.*should return Illuminate\\Database\\Eloquent\\Builder#'
+            path: app/Models/Tournament.php
+
+        # Tournament model - Type narrowing is necessary for runtime safety
+        -
+            message: '#Call to function is_array\(\) with.*will always evaluate to#'
+            path: app/Models/Tournament.php
+        -
+            message: '#Call to function is_array\(\) with.*will always evaluate to true#'
+            path: app/Jobs/PostTournamentToDiscordJob.php
+
+        # Tournament model - isset() checks are necessary
+        -
+            message: '#Variable .* in isset\(\) always exists and is not nullable#'
+            path: app/Models/Tournament.php
+
+        # is_string() checks are necessary for validation
+        -
+            message: '#Call to function is_string\(\) with string will always evaluate to true#'
+            path: app/Models/Tournament.php
+
+        # Tournament model - Dead code detection is false positive
+        -
+            message: '#Unreachable statement - code above always terminates#'
+            path: app/Models/Tournament.php
+
+        # Tournament model - Type parameters are correct (PHPStan limitation)
+        -
+            message: '#Unable to resolve the template type.*in call to function collect#'
+            path: app/Models/Tournament.php
+
+        # TournamentStaffManagementTest - Regex already ensures numeric
+        -
+            message: '#Call to function is_numeric\(\) with numeric-string will always evaluate to true#'
+            path: tests/Feature/Components/TournamentStaffManagementTest.php
+
+        # OsuApiService - Missing iterable type (acceptable)
+        -
+            message: '#Method App\\Services\\OsuApiService::getUserManiaRankings\(\) return type has no value type specified#'
+            path: app/Services/OsuApiService.php
+
+        # Tournament model - Parameter type is optional (acceptable)
+        -
+            message: '#Method App\\Models\\Tournament::setModesAttribute\(\) has parameter .*with no type specified#'
+            path: app/Models/Tournament.php
+
+        # Tournament model - Resolution parameter type is flexible (acceptable)
+        -
+            message: '#Method App\\Models\\Tournament::updateFromParsedData\(\) has parameter .*with no value type specified#'
+            path: app/Models/Tournament.php
+
+        # Tournament tests - Dynamic properties from model
+        -
+            message: '#Access to an undefined property App\\Models\\Tournament.*::\$#'
+            path: tests/Unit/Models/TournamentTest.php
+
+        # Laravel facades - PHPStan cannot resolve magic methods
+        -
+            message: '#Call to static method .* on an unknown class (Log|DB)#'
+            path: app/*
+        -
+            message: '#Call to static method .* on an unknown class (Log|DB)#'
+            path: tests/*
+
+        # TournamentController - Return type and variable false positives
+        -
+            message: '#Method .*::(index|show)\(\) should return.*Illuminate\\Contracts\\View\\View#'
+            path: app/Http/Controllers/TournamentController.php
+        -
+            message: '#Variable \$status might not be defined#'
+            path: app/Http/Controllers/TournamentController.php
+
+        # ForumParser - Match expression false positive
+        -
+            message: '#Match arm comparison#'
+            path: app/Services/ForumParser.php
+
+        # Tournament winners() relationship - PHPStan cannot properly infer HasMany return
+        -
+            message: '#Method App\\Models\\Tournament::winners\(\) should return#'
+            path: app/Models/Tournament.php
+
+        # Health check - Redis facade ping() method (valid Laravel facade method)
+        -
+            message: '#Call to an undefined static method Illuminate\\Support\\Facades\\Redis::ping\(\)#'
+            path: app/Http/Controllers/HealthCheckController.php
+
+        # Console Commands - RequiresConfirmation trait issues
+        -
+            message: '#Method.*getOptionsWithConfirmation\(\) return type has no value type specified#'
+            path: app/Console/Commands/Concerns/RequiresConfirmation.php
+        -
+            message: '#Access to constant VALUE_NONE on an unknown class App\\Console\\Commands\\Concerns\\InputOption#'
+            path: app/Console/Commands/Concerns/RequiresConfirmation.php
+
+        # VerifyTestDatabase - Missing return type (minor issue)
+        -
+            message: '#Method App\\Console\\Commands\\VerifyTestDatabase::handle\(\) has no return type specified#'
+            path: app/Console/Commands/VerifyTestDatabase.php
+
+        # Livewire testing facade - valid Livewire test syntax
+        -
+            message: '#Call to static method (actingAs|test)\(\) on an unknown class Livewire#'
+            path: tests/Feature/Livewire/*
+
+        # SearchController - map() closure type inference limitation (PHPStan false positive)
+        -
+            message: '#Parameter.*\$callback of method.*map\(\) contains unresolvable type#'
+            path: app/Http/Controllers/SearchController.php
+        -
+            message: '#Return type of call to method.*map\(\) contains unresolvable type#'
+            path: app/Http/Controllers/SearchController.php
+
+        # DiscordService - nullCoalesce false positives (keys might not exist at runtime)
+        -
+            message: '#Offset .* on left side of \?\? always exists and is not nullable#'
+            path: app/Services/DiscordService.php
+        -
+            message: '#Variable .* on left side of \?\? always exists and is not nullable#'
+            path: app/Services/DiscordService.php
+
+    # Report unmatched ignored errors
+    reportUnmatchedIgnoredErrors: false

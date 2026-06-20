@@ -1,0 +1,14 @@
+@layer components {
+    /* Button variants */
+    .btn-primary {
+        @apply px-6 py-2.5 bg-osu-pink rounded-lg font-display font-semibold text-white hover:shadow-lg hover:shadow-osu-pink/20 transition-all hover:scale-105 focus:scale-105;
+    }
+
+    .btn-secondary {
+        @apply px-6 py-2.5 bg-dark-700 hover:bg-dark-600 rounded-lg font-display font-semibold text-white transition-all;
+    }
+
+    .btn-ghost {
+        @apply px-6 py-2.5 bg-transparent hover:bg-dark-700 rounded-lg font-display font-semibold text-white transition-all;
+    }
+}
