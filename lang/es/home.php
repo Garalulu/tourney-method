@@ -33,19 +33,19 @@ return [
         'how_to_use' => [
             'title' => 'Cómo usar Tourney Method',
             'items' => [
-                [
+                0 => [
                     'title' => 'Encuentra torneos',
                     'body' => 'Utilice filtros de torneo y comandos de búsqueda para comparar el estado de registros, rangos de rango, modos, regiones y formatos.',
                 ],
-                [
+                1 => [
                     'title' => 'Ver registro',
                     'body' => 'Cuando veas torneos, las notificaciones en la aplicación pueden avisarte cuando el registro se abra o cierre dentro de 24 horas.',
                 ],
-                [
+                2 => [
                     'title' => 'Sigue tu historial',
                     'body' => 'Abre tu perfil y añade registros de participación para torneos que hayas jugado, incluyendo etapa alcanzada, clasificación, compañeros de equipo y enlaces de partida.',
                 ],
-                [
+                3 => [
                     'title' => 'Mejorar los datos',
                     'body' => 'Abre una página de detalles del torneo, desplázate en Contribuciones y envía correciones para metadatos, staff, podios o enlaces.',
                 ],

@@ -16,9 +16,9 @@ return [
         'title' => 'Corregir metadatos de torneos',
         'body' => 'Si la página de un torneo carece de información o no es correcta, utilice el formulario de corrección de la página de detalles del torneo.',
         'steps' => [
-            'Abra la página detallada del torneo.',
-            'Desplácese hasta la sección de Contribuciones en la parte inferior.',
-            'Haga clic en Corregir Torneo y envíe solo los campos que deberían cambiarse.',
+            0 => 'Abra la página detallada del torneo.',
+            1 => 'Desplácese hasta la sección de Contribuciones en la parte inferior.',
+            2 => 'Haga clic en Corregir Torneo y envíe solo los campos que deberían cambiarse.',
         ],
         'add_body' => 'Or you can request to add a new tournament if it is not listed yet.',
         'add_action' => 'Add Tournament',

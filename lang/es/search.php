@@ -1,7 +1,6 @@
 <?php
 
 return [
-    // Search Modal
     'search' => [
         'placeholder' => 'Busca torneos y jugadores...',
         'start_your_search' => 'Comienza tu busqueda',
@@ -9,7 +8,7 @@ return [
         'tournaments' => 'Torneos',
         'players' => 'Jugadores',
         'view_all_tournaments' => 'Mira todos los :count resultados del torneo',
-        'view_all_players' => 'Mira todos los resultados de usuario (Próximamente)',
+        'view_all_players' => 'View all user results (Coming soon)',
         'no_tournaments' => 'No se encontraron torneos',
         'no_players' => 'No se encontraron jugadores',
         'close_desc' => 'Presiona :esc para cerrar',
