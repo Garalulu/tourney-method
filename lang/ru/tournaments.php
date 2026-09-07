@@ -2,9 +2,9 @@
 
 return [
     'add' => [
-        'action' => 'Add Tournament',
-        'login_action' => 'Login to Add',
-        'success' => 'New tournament request #:id was submitted for admin review.',
+        'action' => 'Добавить новый турнир',
+        'login_action' => 'Войдите в аккаунт, чтобы добавить',
+        'success' => 'Новая заявка #:id на добавление турнира была отправлена на рассмотрение.',
     ],
     'title' => 'Все Турниры',
     'status' => [
@@ -27,6 +27,36 @@ return [
         'year' => 'Год',
         'all_years' => 'За всё время',
         'filter_options' => 'Параметры фильтров',
+    ],
+    'sort' => [
+        'label' => 'Sort',
+        'recently_ended' => 'Recently ended',
+        'oldest_ended' => 'Oldest ended',
+        'highest_sr' => 'Highest SR',
+        'lowest_sr' => 'Lowest SR',
+        'desc' => 'Descending',
+        'asc' => 'Ascending',
+    ],
+    'view' => [
+        'label' => 'View',
+        'cards' => 'Cards',
+        'table' => 'Table',
+    ],
+    'table' => [
+        'type' => 'Type',
+        'mode' => 'Mode',
+        'title' => 'Tournament',
+        'rank_range' => 'Rank Range',
+        'team_size' => 'Players',
+        'sr' => 'SR',
+        'region' => 'Region',
+        'badge' => 'Badge',
+        'badge_design' => 'Badge Design',
+        'status' => 'Status',
+        'unbadged' => 'Unbadged',
+        'unknown' => 'Unknown',
+        'global' => 'Global',
+        'regional' => 'Regional',
     ],
     'loading' => [
         'title' => 'Загружаем турниры...',
@@ -51,9 +81,11 @@ return [
         'admin' => 'Перейти в Админ панель',
     ],
     'podiums' => [
+        'participation_title' => 'Tournament Participation',
         'title' => 'Результат турнира',
     ],
     'results' => [
+        'ongoing' => 'Ongoing',
         'expand_all' => 'Загрузить все результаты',
         'collapse' => 'Свернуть остальные места',
         'loading' => 'Загрузка мест...',
@@ -109,6 +141,7 @@ return [
         'format' => 'Формат',
         'team_formation' => 'Формат команды',
         'progression' => 'Формат проведения',
+        'allowed_countries' => 'Allowed Countries',
         'star_rating' => 'Старрейт',
         'badge_approval' => 'Статус одобрения бейджа',
         'badge_approved' => 'Одобрен',
@@ -137,7 +170,7 @@ return [
             'battle_royale' => 'Королевская битва',
             'top' => ':stage (Топ :count)',
             'rounds' => ':stage (:rounds Раунд)|:stage (:rounds Раунда)|:stage (:rounds Раундов)',
-            'rounds_top' => ':stage (:rounds Раунд, топ :count)|:stage (:rounds Раунда, топ :count)|:stage (:rounds Раундов, топ :count)',
+            'rounds_top' => ':stage (:rounds Round, Top :count)|:stage (:rounds Rounds, Top :count)',
         ],
         'stage_short' => [
             'qualifier' => 'Квалы',
@@ -314,7 +347,7 @@ return [
             'bws_base_exponent' => 'Base exponent used in the BWS rank formula.',
             'bws_badge_power' => 'How strongly badge count affects weighted rank.',
             'bws_divisor' => 'Divisor applied to badge weighting in the formula.',
-            'bws_badge_age_cutoff' => 'Игнорировать бейджи, полученные перед этой датой, когда определяется BWS-рейтинг',
+            'bws_badge_age_cutoff' => 'Игнорировать бейджи до этой даты при расчете BWS.',
             'forum_post_url' => 'Официальная ссылка на osu! форум пост или новостную страницу.',
             'spreadsheet_url' => 'Основная таблица для правил, расписания, маппулов или результатов матчей турнира.',
             'discord_url' => 'Публичная ссылка на Discord-сервер турнира.',

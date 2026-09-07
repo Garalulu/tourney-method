@@ -1,7 +1,6 @@
 <?php
 
 return [
-    // Dashboard
     'dashboard' => [
         'rank_milestones' => 'Logros de Rangos',
         'currently_running' => 'Actualmente en marcha',
@@ -14,8 +13,6 @@ return [
         'view_all' => 'Ver todo',
         'loading' => 'Cargando...',
     ],
-
-    // Stats
     'stats' => [
         'global_rank' => 'Clasificación Global',
         'country_rank' => 'Clasificación Nacional',

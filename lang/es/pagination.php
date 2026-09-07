@@ -1,12 +1,12 @@
 <?php
 
 return [
-    'previous' => '&laquo; Anterior',
-    'next' => 'Siguiente &raquo;',
-    'navigation' => 'Navegación de páginas',
-    'showing' => 'Mostrando',
-    'to' => 'a',
-    'of' => 'de',
-    'results' => 'resultados',
-    'go_to_page' => 'Ir a la página :page',
+    'previous' => '&laquo; Previous',
+    'next' => 'Next &raquo;',
+    'navigation' => 'Pagination Navigation',
+    'showing' => 'Showing',
+    'to' => 'to',
+    'of' => 'of',
+    'results' => 'results',
+    'go_to_page' => 'Go to page :page',
 ];

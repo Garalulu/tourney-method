@@ -8,7 +8,7 @@ return [
         'tournaments' => '토너먼트',
         'players' => '유저',
         'view_all_tournaments' => '전체 :count개 토너먼트 검색 결과 보기',
-        'view_all_players' => '전체 유저 검색 결과 보기 (Coming soon)',
+        'view_all_players' => 'View all user results (Coming soon)',
         'no_tournaments' => '토너먼트 검색 결과 없음',
         'no_players' => '유저 검색 결과 없음',
         'close_desc' => ':esc 키 눌러서 닫기',

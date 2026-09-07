@@ -30,7 +30,7 @@ return [
     ],
     'donate' => [
         'title' => '호스팅 및 개발 지원',
-        'body' => '인프라, 개발, 그리고 커뮤니티를 위해 토너먼트 기록을 유용하게 유지하는 데 필요한 시간을 지원합니다.',
+        'body' => 'Donations help cover infrastructure and the time needed to keep tournament records useful for the community.',
         'kofi' => 'Ko-fi에서 기부하기',
         'paypal' => 'PayPal로 기부하기',
         'bank_label' => '은행 이체',

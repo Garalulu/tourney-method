@@ -23,7 +23,7 @@ return [
         'staff' => 'Staff Roles',
         'player' => 'Podium Placements',
         'all_roles' => 'All Roles',
-        'badged' => 'badged',
+        'badged' => 'Badged',
         'see_more' => 'See More (:count)',
         'see_less' => 'See Less',
         'no_staff' => 'No Staff Roles',

@@ -8,7 +8,7 @@ return [
         'tournaments' => 'Турниры',
         'players' => 'Игроки',
         'view_all_tournaments' => 'Посмотреть все найденные турниры: :count',
-        'view_all_players' => 'Посмотреть все результаты (скоро)',
+        'view_all_players' => 'View all user results (Coming soon)',
         'no_tournaments' => 'Турниров не найдено.',
         'no_players' => 'Игроков не найдено.',
         'close_desc' => 'Нажмите :esc чтобы закрыть',
